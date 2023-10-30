@@ -4,12 +4,22 @@ from fastapi.responses import FileResponse, JSONResponse
 import os
 import yaml
 import json
+import logging
+import uvicorn
+import sys
 from utils import db_interface as database
 from utils import password_hasher as hasher
 from utils import email_checker as email_interface
 from utils import access_control as access_control
 
 app = FastAPI()
+
+# Create a custom logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler(sys.stdout))
+
+logger.info('Server starting...')
 
 # Check setup
 print("Checking user images folder...")
@@ -125,24 +135,6 @@ async def update_pfp(file: UploadFile = File(), username: str = Form(), token: s
 
         # Save user avatar
         with open(f"user_images/pfp/{username}.png", "wb") as write_file:
-            write_file.write(contents)
-            write_file.close()
-
-        return {'Status': 'Ok'}
-    else:
-        raise HTTPException(status_code=401, detail="Invalid Token!")
-
-@app.post("/update_profile_banner")
-async def update_pfp(file: UploadFile = File(), username: str = Form(), token: str = Form()):
-    # Verify user token
-    status = database.check_token(username=username, token=token)
-
-    if status == True:
-        # Read the contents of the profile image
-        contents = await file.read()
-
-        # Save user avatar
-        with open(f"user_images/banner/{username}.png", "wb") as write_file:
             write_file.write(contents)
             write_file.close()
 
@@ -301,5 +293,4 @@ async def create_account(username: str, email: str, password: str):
     return {"status": "ok"}
 
 if __name__ == '__main__':
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=8002, log_level='info')
