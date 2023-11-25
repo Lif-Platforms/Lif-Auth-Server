@@ -7,3 +7,4 @@ stdiomask==0.0.6
 uuid==1.30
 mysql-connector-python==8.0.33
 python-multipart==0.0.6
+termcolor==2.2.0
