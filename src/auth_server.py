@@ -343,11 +343,19 @@ async def get_pfp(username: str):
     ### Returns:
     - **file:** The avatar the service requested.
     """
-    # Checks if the user has a profile pic uploaded
-    if os.path.isfile(f"user_images/pfp/{username}"):
-        return FileResponse(f"user_images/pfp/{username}", media_type='image/gif')
+    # Sanitize and validate the username variable (Example: alphanumeric characters allowed)
+    if not username.isalnum():
+        # Handle invalid input (username contains non-alphanumeric characters)
+        return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
+
+    # Construct the file path using the sanitized username
+    banner_path = f"user_images/pfp/{username}"
+
+    # Check if the file exists and is a regular file
+    if os.path.isfile(banner_path):
+        return FileResponse(banner_path, media_type='image/gif')
     else:
-        # Returns default image if none is uploaded
+        # Return default image if the user's banner doesn't exist
         return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
 
 @app.get("/get_banner/{username}")
@@ -362,11 +370,19 @@ async def get_banner(username: str):
     ### Returns:
     - **file:** The banner the service requested.
     """
-    # Checks if the user has a profile pic uploaded
-    if os.path.isfile(f"user_images/banner/{username}"):
-        return FileResponse(f"user_images/banner/{username}", media_type='image/gif')
+    # Sanitize and validate the username variable (Example: alphanumeric characters allowed)
+    if not username.isalnum():
+        # Handle invalid input (username contains non-alphanumeric characters)
+        return FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
+
+    # Construct the file path using the sanitized username
+    banner_path = f"user_images/banner/{username}"
+
+    # Check if the file exists and is a regular file
+    if os.path.isfile(banner_path):
+        return FileResponse(banner_path, media_type='image/gif')
     else:
-        # Returns default image if none is uploaded
+        # Return default image if the user's banner doesn't exist
         return FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
     
 @app.post("/create_lif_account")
