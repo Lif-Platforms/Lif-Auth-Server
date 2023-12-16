@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, Header
+from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 import os
@@ -501,6 +501,32 @@ async def create_account(username: str, email: str, password: str):
     database.create_account(username=username, password=password_hash['password'], email=email, password_salt=password_hash['salt'])
 
     return {"status": "ok"}
+
+@app.websocket('/lif_account_recovery')
+async def account_recovery(websocket: WebSocket):
+    await websocket.accept()
+
+    # Stores email and code for later use
+    user_email = None
+    user_code = None
+
+    # Wait for client to send data
+    while True:
+        data = await websocket.receive_json()
+
+        # Check what kind of data the client sent
+        if 'email' in data:
+            # Check email with database
+            if database.check_email(data['email']) == True:
+                user_email = data['email']
+
+                # Tell client email was received
+                await websocket.send_json({"responseType": "emailSent", "message": "Email sent successfully."})
+            else:
+                # Tell client email is invalid
+                await websocket.send_json({"responseType": "error", "message": "Invalid Email!"})
+        else:
+            await websocket.send_json({"responseType": "error", "message": "Bad Request"})
 
 @app.post('/lif_password_update')
 async def lif_password_update(username: str = Form(), current_password: str = Form(), new_password: str = Form()):
