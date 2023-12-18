@@ -5,6 +5,7 @@
   <img alt="GitHub issues" src="https://img.shields.io/github/issues/Lif-Platforms/Lif-Auth-Server?style=for-the-badge">
   <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Lif-Platforms/Lif-Auth-Server?style=for-the-badge">
   <img alt="Codacy grade" src="https://img.shields.io/codacy/grade/b6b940a8aa894b11864e9eff23826c25?style=for-the-badge">
+  <img alt="Uptime Status" src="https://img.shields.io/uptimerobot/status/m795958685-c1b85bd47dce9f2ce6d10a5b?style=for-the-badge">
 </div>
 
 # 📃 In Detail...
