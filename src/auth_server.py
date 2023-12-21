@@ -554,7 +554,7 @@ async def verify_lif_token(username: str = Form(), token: str = Form()):
     if token == database_token:
         JSONResponse(status_code=200, content='Token is valid!')
     else:
-        raise HTTPException(status_code=403, detail="Invalid Token!")
+        raise HTTPException(status_code=401, detail="Invalid Token!")
     
 @app.get('/get_username/{account_id}')
 async def get_username(account_id: str):
