@@ -2,6 +2,7 @@ import secrets
 import yaml
 import uuid
 import mysql.connector
+from mysql.connector.constants import ClientFlag
 
 # Global database connection
 conn = None
@@ -20,12 +21,23 @@ def connect_to_database():
     # Handle connecting to the database
     def connect():
         global conn
-        conn = mysql.connector.connect(
-            host=configurations['mysql-host'],
-            user=configurations['mysql-user'],
-            password=configurations['mysql-password'],
-            database=configurations['mysql-database']
-        )
+
+        # Define configurations
+        mysql_configs = {
+            "host": configurations['mysql-host'],
+            "port": configurations['mysql-port'],
+            "user": configurations['mysql-user'],
+            "password": configurations['mysql-password'],
+            "database": configurations['mysql-database'], 
+        }
+
+        # Check if SSL is enabled
+        if configurations['mysql-ssl']:
+            # Add ssl configurations to connection
+            mysql_configs['client_flags'] = [ClientFlag.SSL]
+            mysql_configs['ssl_ca'] = configurations['mysql-cert-path']
+
+        conn = mysql.connector.connect(**mysql_configs)
     
     # Check if there is a MySQL connection
     if conn is None:

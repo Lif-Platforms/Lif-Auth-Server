@@ -7,3 +7,6 @@ user_images/
 # Ignore config files
 config.yml
 access-control.yml
+
+# Ignore .pem files
+*.pem

@@ -311,7 +311,7 @@ async def get_account_data(data, account, request: Request):
 @app.get("/verify_token/{username}/{token}")
 async def verify_token(username: str, token: str):
     """
-    ## Verify User Token
+    ## Verify User Token (DEPRECIATED)
     Allows services to verify the authenticity of a token.
     
     ### Parameters:
@@ -533,6 +533,28 @@ async def lif_password_update(username: str = Form(), current_password: str = Fo
         return JSONResponse(status_code=200, content='Updated Password')
     else: 
         raise HTTPException(status_code=401, detail="Invalid Password!")
+
+@app.post('/verify_lif_token')
+async def verify_lif_token(username: str = Form(), token: str = Form()):
+    """
+    ## Verify Lif Token (NEW)
+    Handles the verification of Lif user tokens. 
+    
+    ### Parameters:
+    - **username (str):** The username for the account.
+    - **token (str):** The token for the account.
+
+    ### Returns:
+    - **JSON:** Status of the operation.
+    """
+    # Gets token from database
+    database_token = database.retrieve_user_token(username=username)
+
+    # Check given token against database token
+    if token == database_token:
+        JSONResponse(status_code=200, content='Token is valid!')
+    else:
+        raise HTTPException(status_code=401, detail="Invalid Token!")
     
 @app.get('/get_username/{account_id}')
 async def get_username(account_id: str):
