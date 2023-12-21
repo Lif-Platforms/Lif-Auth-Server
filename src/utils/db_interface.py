@@ -32,7 +32,7 @@ def connect_to_database():
         }
 
         # Check if SSL is enabled
-        if configurations['mysql-ssl'] == True:
+        if configurations['mysql-ssl']:
             # Add ssl configurations to connection
             mysql_configs['client_flags'] = [ClientFlag.SSL]
             mysql_configs['ssl_ca'] = configurations['mysql-cert-path']
