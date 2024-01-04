@@ -586,6 +586,32 @@ async def verify_lif_token(username: str = Form(), token: str = Form()):
 async def get_username(account_id: str):
     return database.get_username(account_id=account_id)
 
+@app.websocket('/lif_account_recovery')
+async def account_recovery(websocket: WebSocket):
+    await websocket.accept()
+
+    # Stores email and code for later use
+    user_email = None
+    user_code = None
+
+    # Wait for client to send data
+    while True:
+        data = await websocket.receive_json()
+
+        # Check what kind of data the client sent
+        if 'email' in data:
+            # Check email with database
+            if database.check_email(data['email']) == True:
+                user_email = data['email']
+
+                # Tell client email was received
+                await websocket.send_json({"responseType": "emailSent", "message": "Email sent successfully."})
+            else:
+                # Tell client email is invalid
+                await websocket.send_json({"responseType": "error", "message": "Invalid Email!"})
+        else:
+            await websocket.send_json({"responseType": "error", "message": "Bad Request"})
+
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8002)
