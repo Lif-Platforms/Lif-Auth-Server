@@ -9,6 +9,7 @@ from utils import db_interface as database
 from utils import password_hasher as hasher
 from utils import email_checker as email_interface
 from utils import access_control as access_control
+from utils import mail_service_interface as mail_service
 
 # Check setup
 print("Checking user images folder...")
@@ -81,6 +82,9 @@ __env__= os.getenv('RUN_ENVIRONMENT')
 print("Setup check complete!")
 
 database.load_config()
+
+# Set access token and url for mail service
+mail_service.set_config(configurations['mail-service-token'], configurations['mail-service-url'])
 
 print(__env__)
 
@@ -512,21 +516,54 @@ async def account_recovery(websocket: WebSocket):
 
     # Wait for client to send data
     while True:
-        data = await websocket.receive_json()
+        # Tries to receive data from client, if fails then the connection is closed
+        try:
+            data = await websocket.receive_json()
 
-        # Check what kind of data the client sent
-        if 'email' in data:
-            # Check email with database
-            if database.check_email(data['email']) == True:
-                user_email = data['email']
+            # Check what kind of data the client sent
+            if 'email' in data:
+                # Check email with database
+                if database.check_email(data['email']) == True:
+                    user_email = data['email']
 
-                # Tell client email was received
-                await websocket.send_json({"responseType": "emailSent", "message": "Email sent successfully."})
+                    # Send recovery code to user
+                    user_code = mail_service.send_recovery_email(user_email)
+
+                    # Tell client email was received
+                    await websocket.send_json({"responseType": "emailSent", "message": "Email sent successfully."})
+                else:
+                    # Tell client email is invalid
+                    await websocket.send_json({"responseType": "error", "message": "Invalid Email!"})
+                    
+            elif 'code' in data:
+                # Compare generated code with user provided code
+                if data['code'] == user_code:
+                    await websocket.send_json({"responseType": "codeCorrect", "message": "Code validated successfully."})
+                else:
+                    await websocket.send_json({"responseType": "error", "message": "Bad Code"})
+                    
+            elif 'password' in data:
+                # Get password hash and gen salt
+                password_hash = hasher.get_hash_gen_salt(data['password'])
+
+                # Get username from email
+                username = database.get_username_from_email(user_email)
+
+                # Update password and salt in database
+                database.update_password(username, password_hash['password'])
+                database.update_user_salt(username, password_hash['salt'])
+
+                # Get user token
+                token = database.get_user_token(username)
+
+                await websocket.send_json({"responseType": "passwordUpdated", "username": username, "token": token})
             else:
-                # Tell client email is invalid
-                await websocket.send_json({"responseType": "error", "message": "Invalid Email!"})
-        else:
-            await websocket.send_json({"responseType": "error", "message": "Bad Request"})
+                await websocket.send_json({"responseType": "error", "message": "Bad Request"})
+
+        except Exception as error:
+            await websocket.close()
+            print("connection closed due to error: " + str(error))
+            break
 
 @app.post('/lif_password_update')
 async def lif_password_update(username: str = Form(), current_password: str = Form(), new_password: str = Form()):
@@ -585,32 +622,6 @@ async def verify_lif_token(username: str = Form(), token: str = Form()):
 @app.get('/get_username/{account_id}')
 async def get_username(account_id: str):
     return database.get_username(account_id=account_id)
-
-@app.websocket('/lif_account_recovery')
-async def account_recovery(websocket: WebSocket):
-    await websocket.accept()
-
-    # Stores email and code for later use
-    user_email = None
-    user_code = None
-
-    # Wait for client to send data
-    while True:
-        data = await websocket.receive_json()
-
-        # Check what kind of data the client sent
-        if 'email' in data:
-            # Check email with database
-            if database.check_email(data['email']) == True:
-                user_email = data['email']
-
-                # Tell client email was received
-                await websocket.send_json({"responseType": "emailSent", "message": "Email sent successfully."})
-            else:
-                # Tell client email is invalid
-                await websocket.send_json({"responseType": "error", "message": "Invalid Email!"})
-        else:
-            await websocket.send_json({"responseType": "error", "message": "Bad Request"})
 
 if __name__ == '__main__':
     import uvicorn

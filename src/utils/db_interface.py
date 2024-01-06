@@ -192,6 +192,15 @@ def check_token(username: str, token: str):
 
     return found_token
 
+def get_user_token(username):
+    connect_to_database()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT token FROM accounts WHERE username = %s", (username,))
+    data = cursor.fetchone()
+
+    return data[0]
+
 def update_user_bio(username, data):
     connect_to_database()
     cursor = conn.cursor()
@@ -245,6 +254,16 @@ def update_password(username: str, password: str):
     # Update password in database
     cursor.execute("UPDATE accounts SET password = %s WHERE username = %s", (password, username))
     conn.commit()
+
+def get_username_from_email(email):
+    connect_to_database()
+    cursor = conn.cursor()
+
+    # Get username from email
+    cursor.execute("SELECT username FROM accounts WHERE email = %s", (email,))
+    data = cursor.fetchone()
+
+    return data[0]
 
 def get_user_email(username: str):
     connect_to_database()
