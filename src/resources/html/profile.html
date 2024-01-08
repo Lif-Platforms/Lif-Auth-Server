@@ -5,18 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{USERNAME}}'s Profile</title>
 </head>
+<!--Get URL parameters and set theme accordingly-->
+<script>
+    // Get all url parameters
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Get theme value
+    const themeValue = urlParams.get('theme');
+
+    console.log(themeValue)
+
+    // Set theme
+    if (themeValue === "dark") {
+        document.documentElement.style.setProperty("--bg-color", "black");
+        document.documentElement.style.setProperty("--fg-color", "white");
+        document.documentElement.style.setProperty("--btn-fg", "white");
+        document.documentElement.style.setProperty("--btn-bg", "#222222");
+        document.documentElement.style.setProperty("--btn-hover", "#5c5c5c");
+    } else {
+        document.documentElement.style.setProperty("--bg-color", "white");
+        document.documentElement.style.setProperty("--fg-color", "black");
+        document.documentElement.style.setProperty("--btn-fg", "black");
+        document.documentElement.style.setProperty("--btn-bg", "#c9c9c9");
+        document.documentElement.style.setProperty("--btn-hover", "white");
+    }
+</script>
 <style>
     body {
         padding: 5px;
+        background-color: var(--bg-color);
     }
 
     .user-banner {
         width: 100%;
         height: 100px;
         display: block;
-        background: url("https://api.auth.lifplatforms.com/get_banner/{{USERNAME}}.png");
-        background-size: cover;
-        background-position: 50%;
         border-radius: 0.5em;
     }
 
@@ -27,13 +50,15 @@
         height: inherit;
         margin: auto;
         transform: translateY(50%);
+        border: 4px solid var(--bg-color);
     }
 
     .username {
         font-family: Arial, Helvetica, sans-serif;
         text-align: center;
-        margin-top: 55px;
+        margin-top: 66px;
         display: block;
+        color: var(--fg-color);
     }
 
     .action-button-container {
@@ -45,7 +70,8 @@
 
     .action-button {
         width: 100%;
-        background-color: rgb(201, 201, 201);
+        background-color: var(--btn-bg);
+        color: var(--btn-fg);
         border-radius: 0.5em;
         border: 1px solid transparent;
         padding: 10px;
@@ -56,18 +82,60 @@
     }
 
     .action-button:hover {
-        background-color: white;
+        background-color: var(--btn-hover);
         border: 1px solid black;
     }
+
+    /* width */
+    ::-webkit-scrollbar {
+    width: 5px;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+    background: var(--bg-color);
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+    background: var(--btn-bg);
+    border-radius: 1em;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+    }
+
 </style>
 <body>
-    <div class="user-banner">
-        <img src="https://api.auth.lifplatforms.com/get_pfp/{{USERNAME}}.png" alt="User Avatar" class="user-avatar">
+    <div class="user-banner" id="user-banner">
+        <!--Image src added by javascript-->
+        <img id="user-avatar" alt="User Avatar" class="user-avatar">
     </div> 
     <h1 class="username">{{USERNAME}}</h1>
     <div class="action-button-container">
-        <button class="action-button">Manage Account</button>
+        <button class="action-button" onclick="handle_my_lif()">Manage Account</button>
         <button class="action-button">Log Out</button>
     </div>
 </body>
+<!--Handle action buttons-->
+<script>
+    function handle_my_lif() {
+        window.top.location.href = "https://my.lifplatforms.com";
+    }
+</script>
+<script>
+    // Generate a random 10 digit number
+    // Will be added onto the banner and avatar URLS to prevent browser caching
+    let randomNum = Math.floor(Math.random() * 9000000000) + 1000000000;
+
+    // Set URLS for avatar and banner
+    document.getElementById("user-banner").style.background = `url('http://localhost:8002/get_banner/{{USERNAME}}.png?dummy=${randomNum}')`;
+    document.getElementById("user-avatar").setAttribute("src", `https://api.auth.lifplatforms.com/get_pfp/{{USERNAME}}.png?dummy=${randomNum}`);
+
+    // Add extra styles to user banner
+    document.getElementById("user-banner").style.backgroundPosition = "50%";
+    document.getElementById("user-banner").style.backgroundSize = "cover";
+</script>
 </html>
