@@ -75,7 +75,7 @@
         border-radius: 0.5em;
         border: 1px solid transparent;
         padding: 10px;
-        display: block;
+        display: none;
         margin-top: 10px;
         cursor: pointer;
         transition: 0.3s ease-in-out;
@@ -113,10 +113,11 @@
         <!--Image src added by javascript-->
         <img id="user-avatar" alt="User Avatar" class="user-avatar">
     </div> 
-    <h1 class="username">{{USERNAME}}</h1>
+    <h1 class="username" id="username">{{USERNAME}}</h1>
     <div class="action-button-container">
-        <button class="action-button" onclick="handle_my_lif()">Manage Account</button>
-        <button class="action-button">Log Out</button>
+        <button class="action-button" onclick="handle_my_lif()" id="btn-1">Manage Account</button>
+        <button class="action-button" id="btn-2">Log Out</button>
+        <button class="action-button" id="btn-3">Log In</button>
     </div>
 </body>
 <!--Handle action buttons-->
@@ -131,11 +132,42 @@
     let randomNum = Math.floor(Math.random() * 9000000000) + 1000000000;
 
     // Set URLS for avatar and banner
-    document.getElementById("user-banner").style.background = `url('http://localhost:8002/get_banner/{{USERNAME}}.png?dummy=${randomNum}')`;
+    document.getElementById("user-banner").style.background = `url('https://api.auth.lifplatforms.com/get_banner/{{USERNAME}}.png?dummy=${randomNum}')`;
     document.getElementById("user-avatar").setAttribute("src", `https://api.auth.lifplatforms.com/get_pfp/{{USERNAME}}.png?dummy=${randomNum}`);
 
     // Add extra styles to user banner
     document.getElementById("user-banner").style.backgroundPosition = "50%";
     document.getElementById("user-banner").style.backgroundSize = "cover";
+</script>
+<!--Handle action button load-->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("load action button");
+        // Get username
+        const username = document.getElementById("username").innerHTML;
+
+        // Get action buttons
+        const button_1 = document.getElementById("btn-1");
+        const button_2 = document.getElementById("btn-2");
+        const button_3 = document.getElementById("btn-3");
+
+        // Check if username is guest
+        if (username === "Guest") {
+            // Hide manage account and log out buttons
+            button_1.style.display = "none";
+            button_2.style.display = "none";
+
+            // Show log in button
+            button_3.style.display = "block";
+            
+        } else {
+            // Hide manage account and log out buttons
+            button_1.style.display = "block";
+            button_2.style.display = "block";
+
+            // Show log in button
+            button_3.style.display = "none";
+        }
+    });
 </script>
 </html>

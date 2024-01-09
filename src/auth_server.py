@@ -562,8 +562,15 @@ async def get_username(account_id: str):
 
 @app.get('/get_profile/{username}', response_class=HTMLResponse)
 async def get_profile(username: str):
+    # Check to ensure provided user exists
+    user_exist = database.check_username(username)
+
+    # Set username to guest if not found
+    if user_exist == False:
+        username = "Guest"
+
     # Get HTML document path
-    document_path = os.path.join(os.path.dirname(__file__), "resources/html/profile.html")
+    document_path = os.path.join(os.path.dirname(__file__), "resources/html documents/profile.html")
 
     # Read HTML document
     with open(document_path, "r") as document:
