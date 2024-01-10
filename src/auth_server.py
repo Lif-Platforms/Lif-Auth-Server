@@ -140,9 +140,13 @@ async def login(username: str, password: str):
 
         # Returns info to client
         return {"Status": "Successful", "Token": token}
+    
+    elif status == "ACCOUNT_SUSPENDED":
+        return {"Status": "Unsuccessful", "Token": "None", "Suspended": True}
+
     else:
         # Tells client credentials are incorrect
-        return {"Status": "Unsuccessful", "Token": "None"}
+        return {"Status": "Unsuccessful", "Token": "None", "Suspended": False}
 
 @app.post('/lif_login')
 async def lif_login(username: str = Form(), password: str = Form()):
@@ -163,13 +167,19 @@ async def lif_login(username: str = Form(), password: str = Form()):
     # Checks if password hash was successful
     if not password_hash:
         return HTTPException(status_code=401, detail='Invalid Login Credentials!')
-
+    
     # Verifies credentials with database
-    if database.verify_credentials(username=username, password=password_hash) == "OK":
+    status = database.verify_credentials(username=username, password=password_hash)
+    
+    if status == "OK":
         # Gets token from database
         token = database.retrieve_user_token(username=username)
 
         return {'token': token}
+    
+    elif status == "ACCOUNT_SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account Suspended!")
+    
     else: 
         # Tells client credentials are incorrect
         raise HTTPException(status_code=401, detail='Incorrect Login Credentials')

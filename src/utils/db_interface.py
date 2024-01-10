@@ -56,17 +56,21 @@ def verify_credentials(username, password):
         connect_to_database()
         cursor = conn.cursor()
 
-        print(username, password)
-
         # Validate login credentials
         cursor.execute("SELECT * FROM accounts WHERE username = %s AND password = %s", (username, password,))
         account = cursor.fetchone()
 
-        print(account)
-
         # Checks if the account was found
         if account:
-            return "OK"
+            # Check if user is suspended
+            cursor.execute("SELECT role FROM accounts WHERE username = %s", (username,))
+            role = cursor.fetchone()
+
+            if role[0] == "SUSPENDED":
+                return "ACCOUNT_SUSPENDED"
+            
+            else:
+                return "OK"
         else:
             return "BAD_CREDENTIALS"
 
