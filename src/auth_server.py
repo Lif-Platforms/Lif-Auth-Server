@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse, JSONResponse
 import os
 import yaml
 import json
+import re
 from _version import __version__
 from utils import db_interface as database
 from utils import password_hasher as hasher
@@ -343,17 +344,15 @@ async def get_pfp(username: str):
     ### Returns:
     - **file:** The avatar the service requested.
     """
-    # Sanitize and validate the username variable (Example: alphanumeric characters allowed)
-    if not username.isalnum():
-        # Handle invalid input (username contains non-alphanumeric characters)
-        return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
-
+    # Sanitize the username
+    filtered_username = re.sub(r'[^a-zA-Z1-9\._]+', '', username)
+        
     # Construct the file path using the sanitized username
-    banner_path = f"user_images/pfp/{username}"
+    avatar_path = f"user_images/pfp/{filtered_username}"
 
     # Check if the file exists and is a regular file
-    if os.path.isfile(banner_path):
-        return FileResponse(banner_path, media_type='image/gif')
+    if os.path.isfile(avatar_path):
+        return FileResponse(avatar_path, media_type='image/gif')
     else:
         # Return default image if the user's banner doesn't exist
         return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
@@ -370,13 +369,11 @@ async def get_banner(username: str):
     ### Returns:
     - **file:** The banner the service requested.
     """
-    # Sanitize and validate the username variable (Example: alphanumeric characters allowed)
-    if not username.isalnum():
-        # Handle invalid input (username contains non-alphanumeric characters)
-        return FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
+    # Sanitize the username
+    filtered_username = re.sub(r'[^a-zA-Z1-9\._]+', '', username)
 
     # Construct the file path using the sanitized username
-    banner_path = f"user_images/banner/{username}"
+    banner_path = f"user_images/banner/{filtered_username}"
 
     # Check if the file exists and is a regular file
     if os.path.isfile(banner_path):
