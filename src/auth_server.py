@@ -122,7 +122,7 @@ async def login(username: str, password: str):
     - **password (str):** The password for the account.
 
     ### Returns:
-    - **dict:** Status of login and user token.
+    - **JSON:** Status of login and user token.
     """
     # Gets password hash
     password_hash = hasher.get_hash_with_database_salt(username=username, password=password)
@@ -134,7 +134,7 @@ async def login(username: str, password: str):
     # Verifies credentials with database
     status = database.verify_credentials(username=username, password=password_hash)
 
-    if status == "Good!":
+    if status == "OK":
         # Gets token from database
         token = database.retrieve_user_token(username=username)
 
@@ -155,7 +155,7 @@ async def lif_login(username: str = Form(), password: str = Form()):
     - **password (str):** The password for the account.
 
     ### Returns:
-    - **dict:** Token for user account.
+    - **JSON:** Token for user account.
     """
     # Gets password hash
     password_hash = hasher.get_hash_with_database_salt(username=username, password=password)
@@ -165,7 +165,7 @@ async def lif_login(username: str = Form(), password: str = Form()):
         return HTTPException(status_code=401, detail='Invalid Login Credentials!')
 
     # Verifies credentials with database
-    if database.verify_credentials(username=username, password=password_hash) == 'Good!':
+    if database.verify_credentials(username=username, password=password_hash) == "OK":
         # Gets token from database
         token = database.retrieve_user_token(username=username)
 
@@ -498,6 +498,32 @@ async def create_account(username: str, email: str, password: str):
     database.create_account(username=username, password=password_hash['password'], email=email, password_salt=password_hash['salt'])
 
     return {"status": "ok"}
+
+@app.post('/suspend_account')
+async def suspend_account(account_id: str = Form(), access_token: str = Form()):
+    """
+    ## Suspend User Account
+    Updates a users role to "SUSPENDED".
+    
+    ### Parameters:
+    - **account_id (str):** The user id for the account.
+    - **access_token (str):** The user/service access token.
+
+    ### Returns:
+    - **Text:** Status of the operation.
+    """
+    # Verify access token
+    if access_control.verify_token(access_token):
+        # Verify perms
+        if access_control.has_perms(access_token, "account.suspend"):
+            # Update user role in database
+            database.set_role(account_id, "SUSPENDED")
+
+            return "ok"
+        else:
+            raise HTTPException(status_code=403, detail="No Permission")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid Token")
 
 @app.post('/lif_password_update')
 async def lif_password_update(username: str = Form(), current_password: str = Form(), new_password: str = Form()):
