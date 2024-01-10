@@ -50,34 +50,29 @@ def connect_to_database():
 # Function for verifying user credentials
 def verify_credentials(username, password):
     if password is None:
-        return "Bad!"
+        return "BAD_CREDENTIALS"
     
     else:
         connect_to_database()
         cursor = conn.cursor()
 
-        # Gets all accounts from the MySQL database
-        cursor.execute("SELECT * FROM accounts")
-        items = cursor.fetchall()
-
-        foundAccount = False
-
-        # Looks for the account in the database
-        for account in items:
-            databaseUser = account[1]
-            databasePass = account[2]
-
-            # Checks if the credentials match
-            if username == databaseUser and password == databasePass:
-                foundAccount = True
-
-        cursor.close()
+        # Validate login credentials
+        cursor.execute("SELECT * FROM accounts WHERE username = %s AND password = %s", (username, password,))
+        account = cursor.fetchone()
 
         # Checks if the account was found
-        if foundAccount:
-            return "Good!"
+        if account:
+            # Check if user is suspended
+            cursor.execute("SELECT role FROM accounts WHERE username = %s", (username,))
+            role = cursor.fetchone()
+
+            if role[0] == "SUSPENDED":
+                return "ACCOUNT_SUSPENDED"
+            
+            else:
+                return "OK"
         else:
-            return "Bad!"
+            return "BAD_CREDENTIALS"
 
 def get_password_salt(username):
     connect_to_database()
@@ -263,3 +258,11 @@ def get_username(account_id: str):
     data = cursor.fetchone()
 
     return data[1]
+
+def set_role(account_id, role):
+    connect_to_database()
+    cursor = conn.cursor()
+
+    # Set role of user
+    cursor.execute("UPDATE accounts SET role = %s WHERE user_id = %s", (role, account_id,))
+    conn.commit()
