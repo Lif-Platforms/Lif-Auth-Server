@@ -117,13 +117,17 @@
     <div class="action-button-container">
         <button class="action-button" onclick="handle_my_lif()" id="btn-1">Manage Account</button>
         <button class="action-button" id="btn-2">Log Out</button>
-        <button class="action-button" id="btn-3">Log In</button>
+        <button class="action-button" id="btn-3" onclick="handle_login()">Log In</button>
     </div>
 </body>
 <!--Handle action buttons-->
 <script>
     function handle_my_lif() {
         window.top.location.href = "https://my.lifplatforms.com";
+    }
+
+    function handle_login() {
+        window.top.location.href = "https://my.lifplatforms.com/login";
     }
 </script>
 <script>
