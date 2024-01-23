@@ -5,5 +5,7 @@
     "mysql-password": "test123",
     "mysql-database": "Lif_Accounts",
     "mysql-ssl": false,
-    "mysql-cert-path": "INSERT PATH HERE"
+    "mysql-cert-path": "INSERT PATH HERE",
+    "mail-service-token": "INSERT TOKEN HERE",
+    "mail-service-url": "INSERT URL HERE"
 }

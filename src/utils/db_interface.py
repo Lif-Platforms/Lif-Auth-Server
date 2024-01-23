@@ -273,3 +273,13 @@ class update:
         # Set role of user
         cursor.execute("UPDATE accounts SET role = %s WHERE user_id = %s", (role, account_id,))
         conn.commit()
+
+def get_username_from_email(email):
+    connect_to_database()
+    cursor = conn.cursor()
+
+    # Get username from email
+    cursor.execute("SELECT username FROM accounts WHERE email = %s", (email,))
+    data = cursor.fetchone()
+
+    return data[0]
