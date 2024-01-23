@@ -35,7 +35,8 @@ def send_recovery_email(email):
             "subject": "Your Lif Recovery Code",
             "recipient": email
         },
-        data=email_body
+        data=email_body,
+        timeout=5
     )
 
     return recovery_code
