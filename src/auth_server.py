@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse, JSONResponse
 import os
 import yaml
 import json
+import re
 from _version import __version__
 from utils import db_interface as database
 from utils import password_hasher as hasher
@@ -125,7 +126,7 @@ async def login(username: str, password: str):
     - **password (str):** The password for the account.
 
     ### Returns:
-    - **dict:** Status of login and user token.
+    - **JSON:** Status of login and user token.
     """
     # Gets password hash
     password_hash = hasher.get_hash_with_database_salt(username=username, password=password)
@@ -135,17 +136,21 @@ async def login(username: str, password: str):
         return {"Status": "Unsuccessful", "Token": "None"}
 
     # Verifies credentials with database
-    status = database.verify_credentials(username=username, password=password_hash)
+    status = database.auth.verify_credentials(username=username, password=password_hash)
 
-    if status == "Good!":
+    if status == "OK":
         # Gets token from database
-        token = database.retrieve_user_token(username=username)
+        token = database.info.retrieve_user_token(username=username)
 
         # Returns info to client
         return {"Status": "Successful", "Token": token}
+    
+    elif status == "ACCOUNT_SUSPENDED":
+        return {"Status": "Unsuccessful", "Token": "None", "Suspended": True}
+
     else:
         # Tells client credentials are incorrect
-        return {"Status": "Unsuccessful", "Token": "None"}
+        return {"Status": "Unsuccessful", "Token": "None", "Suspended": False}
 
 @app.post('/lif_login')
 async def lif_login(username: str = Form(), password: str = Form()):
@@ -158,21 +163,27 @@ async def lif_login(username: str = Form(), password: str = Form()):
     - **password (str):** The password for the account.
 
     ### Returns:
-    - **dict:** Token for user account.
+    - **JSON:** Token for user account.
     """
     # Gets password hash
     password_hash = hasher.get_hash_with_database_salt(username=username, password=password)
 
     # Checks if password hash was successful
     if not password_hash:
-        return HTTPException(status_code=401, detail='Invalid Login Credentials!')
-
+        raise HTTPException(status_code=401, detail='Invalid Login Credentials!')
+    
     # Verifies credentials with database
-    if database.verify_credentials(username=username, password=password_hash) == 'Good!':
+    status = database.auth.verify_credentials(username=username, password=password_hash)
+    
+    if status == "OK":
         # Gets token from database
-        token = database.retrieve_user_token(username=username)
+        token = database.info.retrieve_user_token(username=username)
 
         return {'token': token}
+    
+    elif status == "ACCOUNT_SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account Suspended!")
+    
     else: 
         # Tells client credentials are incorrect
         raise HTTPException(status_code=401, detail='Incorrect Login Credentials')
@@ -192,7 +203,7 @@ async def update_pfp(file: UploadFile = File(), username: str = Form(), token: s
     - **dict:** Status of the operation.
     """
     # Verify user token
-    status = database.check_token(username=username, token=token)
+    status = database.auth.check_token(username=username, token=token)
 
     if status == True:
         # Read the contents of the profile image
@@ -222,7 +233,7 @@ async def update_banner(file: UploadFile = File(), username: str = Form(), token
     - **dict:** Status of the operation.
     """
     # Verify user token
-    status = database.check_token(username=username, token=token)
+    status = database.auth.check_token(username=username, token=token)
 
     if status == True:
         # Read the contents of the profile image
@@ -253,9 +264,9 @@ async def update_account_info(username: str = Form(), token: str = Form(), bio: 
     - **JSON:** Status of the operation.
     """
     # Verify user token
-    if database.check_token(username=username, token=token):
-        database.update_user_bio(username=username, data=bio)
-        database.update_user_pronouns(username=username, data=pronouns)
+    if database.auth.check_token(username=username, token=token):
+        database.update.update_user_bio(username=username, data=bio)
+        database.update.update_user_pronouns(username=username, data=pronouns)
 
         return JSONResponse(status_code=200, content="Updated Successfully")
     else:
@@ -273,11 +284,11 @@ async def get_user_bio(username: str):
     ### Returns:
     - **str:** Bio for the account.
     """
-    return database.get_bio(username=username)
+    return database.info.get_bio(username=username)
 
 @app.get("/get_user_pronouns/{username}")
 async def get_user_pronouns(username: str):
-    return database.get_pronouns(username=username)
+    return database.info.get_pronouns(username=username)
     
 @app.get('/get_account_info/{data}/{account}')
 async def get_account_data(data, account, request: Request):
@@ -304,7 +315,7 @@ async def get_account_data(data, account, request: Request):
         if data == "email":
             # Verify server has permission to access the requested information
             if access_control.has_perms(token=access_token, permission='account.email'): 
-                return {"email": database.get_user_email(username=account)}
+                return {"email": database.info.get_user_email(username=account)}
             else:
                 raise HTTPException(status_code=403, detail="No Permission!")
         else:
@@ -326,7 +337,7 @@ async def verify_token(username: str, token: str):
     - **dict:** Status of the operation.
     """
     # Gets token from database
-    database_token = database.retrieve_user_token(username=username)
+    database_token = database.info.retrieve_user_token(username=username)
 
     if not database_token:
         return {"Status": "Unsuccessful"}
@@ -347,17 +358,15 @@ async def get_pfp(username: str):
     ### Returns:
     - **file:** The avatar the service requested.
     """
-    # Sanitize and validate the username variable (Example: alphanumeric characters allowed)
-    if not username.isalnum():
-        # Handle invalid input (username contains non-alphanumeric characters)
-        return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
-
+    # Sanitize the username
+    filtered_username = re.sub(r'[^a-zA-Z1-9\._]+', '', username)
+        
     # Construct the file path using the sanitized username
-    banner_path = f"user_images/pfp/{username}"
+    avatar_path = f"user_images/pfp/{filtered_username}"
 
     # Check if the file exists and is a regular file
-    if os.path.isfile(banner_path):
-        return FileResponse(banner_path, media_type='image/gif')
+    if os.path.isfile(avatar_path):
+        return FileResponse(avatar_path, media_type='image/gif')
     else:
         # Return default image if the user's banner doesn't exist
         return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
@@ -374,13 +383,11 @@ async def get_banner(username: str):
     ### Returns:
     - **file:** The banner the service requested.
     """
-    # Sanitize and validate the username variable (Example: alphanumeric characters allowed)
-    if not username.isalnum():
-        # Handle invalid input (username contains non-alphanumeric characters)
-        return FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
+    # Sanitize the username
+    filtered_username = re.sub(r'[^a-zA-Z1-9\._]+', '', username)
 
     # Construct the file path using the sanitized username
-    banner_path = f"user_images/banner/{username}"
+    banner_path = f"user_images/banner/{filtered_username}"
 
     # Check if the file exists and is a regular file
     if os.path.isfile(banner_path):
@@ -410,12 +417,12 @@ async def create_lif_account(request: Request):
     email = data["email"]
 
     # Check username usage
-    username_status = database.check_username(username)
+    username_status = database.auth.check_username(username)
     if username_status:
         raise HTTPException(status_code=409, detail="Username Already in Use!")
 
     # Check email usage
-    email_status = database.check_email(email)
+    email_status = database.auth.check_email(email)
     if email_status:
         raise HTTPException(status_code=409, detail="Email Already in Use!")
 
@@ -428,7 +435,7 @@ async def create_lif_account(request: Request):
     password_hash = hasher.get_hash_gen_salt(password)
 
     # Create user account
-    database.create_account(username=username, password=password_hash['password'], email=email, password_salt=password_hash['salt'])
+    database.auth.create_account(username=username, password=password_hash['password'], email=email, password_salt=password_hash['salt'])
 
     return {"Status": "Ok"}  
 
@@ -447,7 +454,7 @@ async def check_account_info_usage(type: str, info: str):
     """
     if type == "username":
         # Check username usage
-        username_status = database.check_username(info)
+        username_status = database.auth.check_username(info)
         if username_status:
             raise HTTPException(status_code=409, detail="Username Already in Use!")
         else:
@@ -455,7 +462,7 @@ async def check_account_info_usage(type: str, info: str):
 
     if type == "email":
         # Check email usage
-        email_status = database.check_email(info)
+        email_status = database.auth.check_email(info)
         if email_status:
             raise HTTPException(status_code=409, detail="Email Already in Use!")
         else:
@@ -484,12 +491,12 @@ async def create_account(username: str, email: str, password: str):
     - **dict:** Status of the operation.
     """
     # Check username usage
-    username_status = database.check_username(username)
+    username_status = database.auth.check_username(username)
     if username_status:
         return {"status": "unsuccessful", "reason": "Username Already in Use!"}
 
     # Check email usage
-    email_status = database.check_email(email)
+    email_status = database.auth.check_email(email)
     if email_status:
         return {"status": "unsuccessful", "reason": "Email Already in Use!"}
 
@@ -502,9 +509,35 @@ async def create_account(username: str, email: str, password: str):
     password_hash = hasher.get_hash_gen_salt(password)
 
     # Create user account
-    database.create_account(username=username, password=password_hash['password'], email=email, password_salt=password_hash['salt'])
+    database.auth.create_account(username=username, password=password_hash['password'], email=email, password_salt=password_hash['salt'])
 
     return {"status": "ok"}
+
+@app.post('/suspend_account')
+async def suspend_account(account_id: str = Form(), access_token: str = Form()):
+    """
+    ## Suspend User Account
+    Updates a users role to "SUSPENDED".
+    
+    ### Parameters:
+    - **account_id (str):** The user id for the account.
+    - **access_token (str):** The user/service access token.
+
+    ### Returns:
+    - **Text:** Status of the operation.
+    """
+    # Verify access token
+    if access_control.verify_token(access_token):
+        # Verify perms
+        if access_control.has_perms(access_token, "account.suspend"):
+            # Update user role in database
+            database.update.set_role(account_id, "SUSPENDED")
+
+            return "ok"
+        else:
+            raise HTTPException(status_code=403, detail="No Permission")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid Token")
 
 @app.websocket('/lif_account_recovery')
 async def account_recovery(websocket: WebSocket):
@@ -583,15 +616,15 @@ async def lif_password_update(username: str = Form(), current_password: str = Fo
     password_hash = hasher.get_hash_with_database_salt(username=username, password=current_password)
 
     # Verify old credentials before updating password
-    if database.verify_credentials(username=username, password=password_hash) == 'Good!':
+    if database.auth.verify_credentials(username=username, password=password_hash) =="OK":
         # Get hashed password and salt
         new_password_data = hasher.get_hash_gen_salt(new_password)
 
         # Update user salt in database
-        database.update_user_salt(username=username, salt=new_password_data['salt'])
+        database.update.update_user_salt(username=username, salt=new_password_data['salt'])
 
         # Update user password in database
-        database.update_password(username=username, password=new_password_data['password'])
+        database.update.update_password(username=username, password=new_password_data['password'])
 
         return JSONResponse(status_code=200, content='Updated Password')
     else: 
@@ -611,7 +644,7 @@ async def verify_lif_token(username: str = Form(), token: str = Form()):
     - **JSON:** Status of the operation.
     """
     # Gets token from database
-    database_token = database.retrieve_user_token(username=username)
+    database_token = database.info.retrieve_user_token(username=username)
 
     # Check given token against database token
     if token == database_token:
@@ -621,7 +654,7 @@ async def verify_lif_token(username: str = Form(), token: str = Form()):
     
 @app.get('/get_username/{account_id}')
 async def get_username(account_id: str):
-    return database.get_username(account_id=account_id)
+    return database.info.get_username(account_id=account_id)
 
 if __name__ == '__main__':
     import uvicorn
