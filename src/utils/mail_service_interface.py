@@ -22,7 +22,7 @@ def send_recovery_email(email):
         document.close()
 
     # Generate recovery code
-    recovery_code = ''.join([str(ord(os.urandom(1))) for _ in range(5)])
+    recovery_code = ''.join([str(ord(os.urandom(1)) % 10) for _ in range(5)])
 
     # Add recovery code to email
     email_body = email_body.replace("{{RECOVERY CODE}}", recovery_code)
