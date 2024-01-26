@@ -1,4 +1,5 @@
 {
+    "allow-origins": ["*"],
     "mysql-host": "localhost",
     "mysql-port": 3306,
     "mysql-user": "root",
