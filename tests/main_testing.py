@@ -20,6 +20,9 @@ class logger:
     def error(error):
         print(colored(f"ERR: {error}", "red"))
 
+# Keep track of test number
+test_number = 1
+
 # Ask tester for host information
 auth_url = input('Enter Auth URL: ')
 
@@ -42,14 +45,16 @@ if result.status_code == 200:
     content = json.loads(result.content.decode('UTF-8'))
 
     if content['Status'] == 'Successful':
-        logger.info("✓ Test 1 PASSED!")
+        logger.info(f"✓ Test {str(test_number)} PASSED!")
         token = content['Token']
     else:
-        logger.error("X Test 1 FAILED!")
+        logger.error(f"X Test {str(test_number)} FAILED! Status: {content['Status']}")
         quit()
 else:
-    logger.error(f"X Test 1 FAILED! Status Code: {str(result.status_code)}")
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
     quit()
+
+test_number += 1
 
 # Test new Lif login
 logger.info("Testing Lif login (NEW)...")
@@ -58,11 +63,13 @@ result = requests.post(url=f'{auth_url}/lif_login', data={'username': username, 
 
 # Check http status code
 if result.status_code == 200:
-    logger.info("✓ Test 2 PASSED!")
+    logger.info(f"✓ Test {str(test_number)} PASSED!")
 
 else:
-    logger.error(f"X Test 2 FAILED! Status Code: {str(result.status_code)}")
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
     quit()
+
+test_number += 1
 
 # Test avatar update
 logger.info("Testing avatar update...")
@@ -76,14 +83,16 @@ if result.status_code == 200:
     content = json.loads(result.content.decode('UTF-8'))
 
     if content['Status'] == "Ok":
-        logger.info("✓ Test 3 PASSED!")
+        logger.info(f"✓ Test {str(test_number)} PASSED!")
 
     else:
-        logger.error("X Test 3 FAILED!")
+        logger.error(f"X Test {str(test_number)} FAILED!")
         quit()
 else:
-    logger.error(f"X Test 3 FAILED! Status Code: {str(result.status_code)}")
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
     quit()
+
+test_number += 1
 
 # Test user banner update
 logger.info("Testing user banner update...")
@@ -97,14 +106,16 @@ if result.status_code == 200:
     content = json.loads(result.content.decode('UTF-8'))
 
     if content['Status'] == "Ok":
-        logger.info("✓ Test 4 PASSED!")
+        logger.info(f"✓ Test {str(test_number)} PASSED!")
 
     else:
-        logger.error("X Test 4 FAILED!")
+        logger.error(f"X Test {str(test_number)} FAILED!")
         quit()
 else:
-    logger.error(f"X Test 4 FAILED! Status Code: {str(result.status_code)}")
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
     quit()
+
+test_number += 1
 
 # Test account info update (Personalization)
 logger.info("Testing account info update (Personalization)...")
@@ -118,11 +129,13 @@ result = requests.post(url=f"{auth_url}/update_account_info/personalization", da
 
 # Check status of operation
 if result.status_code == 200:
-    logger.info("✓ Test 5 PASSED!")
+    logger.info(f"✓ Test {str(test_number)} PASSED!")
 
 else:
-    logger.error(f"X Test 5 FAILED! Status Code: {str(result.status_code)}")
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
     quit()
+
+test_number += 1
 
 # Test get user bio
 logger.info("Testing get user bio...")
@@ -131,11 +144,13 @@ result = requests.get(url=f"{auth_url}/get_user_bio/{username}")
 
 # Check status of operation
 if result.status_code == 200:
-    logger.info("✓ Test 6 PASSED!")
+    logger.info(f"✓ Test {str(test_number)} PASSED!")
 
 else:
-    logger.error(f"X Test 6 FAILED! Status Code: {str(result.status_code)}")
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
     quit()
+
+test_number += 1
 
 # Test get user pronouns
 logger.info("Testing get user pronouns...")
@@ -144,8 +159,57 @@ result = requests.get(url=f"{auth_url}/get_user_pronouns/{username}")
 
 # Check status of operation
 if result.status_code == 200:
-    logger.info("✓ Test 6 PASSED!")
+    logger.info(f"✓ Test {str(test_number)} PASSED!")
 
 else:
-    logger.error(f"X Test 7 FAILED! Status Code: {str(result.status_code)}")
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
     quit()
+
+test_number += 1
+
+# Test get account info
+logger.info("Testing get account info...")
+
+account = input("Enter Account Name: ")
+access_token = input("Enter Auth Access Token: ")
+
+result = requests.get(url=f"{auth_url}/get_account_info/email/{account}",
+                      headers={"access-token": access_token}
+                      )
+
+# Check operation status
+if result.status_code == 200:
+    logger.info(f"✓ Test {str(test_number)} PASSED!")
+else:
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
+
+test_number += 1
+
+# Test token verification
+logger.info("Testing token verification (DEPRECIATED)...")
+
+result = requests.get(url=f"{auth_url}/verify_token/{username}/{token}")
+
+# Check operation status
+if result.status_code == 200:
+    # Decode request body
+    content = json.loads(result.content.decode('UTF-8'))
+
+    if content['Status'] == "Successful":
+        logger.info(f"✓ Test {str(test_number)} PASSED!")
+    else:
+        logger.error(f"X Test {str(test_number)} FAILED! Status: {content['Status']}")
+else:
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
+
+test_number += 1
+
+# Test avatars 
+logger.info("Testing avatars...")
+
+result = requests.get(f"{auth_url}/get_pfp/{username}")
+
+if result.status_code == 200:
+    logger.info(f"✓ Test {str(test_number)} PASSED!")
+else:
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
