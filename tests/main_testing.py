@@ -182,6 +182,7 @@ if result.status_code == 200:
     logger.info(f"✓ Test {str(test_number)} PASSED!")
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
+    quit()
 
 test_number += 1
 
@@ -199,17 +200,65 @@ if result.status_code == 200:
         logger.info(f"✓ Test {str(test_number)} PASSED!")
     else:
         logger.error(f"X Test {str(test_number)} FAILED! Status: {content['Status']}")
+        quit()
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
+    quit()
 
 test_number += 1
 
 # Test avatars 
 logger.info("Testing avatars...")
 
-result = requests.get(f"{auth_url}/get_pfp/{username}")
+result = requests.get(f"{auth_url}/get_pfp/{username}.png")
 
 if result.status_code == 200:
     logger.info(f"✓ Test {str(test_number)} PASSED!")
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
+    quit()
+
+test_number += 1
+
+# Test user banners
+logger.info("Testing user banners...")
+
+result = requests.get(f"{auth_url}/get_banner/{username}.png")
+
+if result.status_code == 200:
+    logger.info(f"✓ Test {str(test_number)} PASSED!")
+else:
+    logger.error(f"X Test {str(test_number)} FAILED!")
+    quit()
+
+test_number += 1
+
+# Test account creation
+logger.info("Testing account creation (NEW)...")
+
+new_username = input("Enter New Username: ")
+new_email = input("Enter New Email: ")
+new_password = input("Enter New Password: ")
+
+# Prepare json data
+request_body = {
+                "username": new_username,
+                "password": new_password,
+                "email": new_email,
+            }
+result = requests.post(f"{auth_url}/create_lif_account",
+                        data=json.dumps(request_body)
+                       )
+
+if result.status_code == 200:
+    content = json.loads(result.content.decode('UTF-8'))
+
+    if content['Status'] == "Ok":
+        logger.info(f"✓ Test {str(test_number)} PASSED!")
+
+    else:
+        logger.error(f"X Test {str(test_number)} FAILED! Status: {content['Status']}")
+        quit()
+else:
+    logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
+    quit()
