@@ -263,3 +263,13 @@ def get_username(account_id: str):
     data = cursor.fetchone()
 
     return data[1]
+
+def get_username_from_email(email):
+    connect_to_database()
+    cursor = conn.cursor()
+
+    # Get username from email
+    cursor.execute("SELECT username FROM accounts WHERE email = %s", (email,))
+    data = cursor.fetchone()
+
+    return data[0]

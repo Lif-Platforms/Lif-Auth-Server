@@ -520,7 +520,7 @@ async def account_recovery(websocket: WebSocket):
             # Check what kind of data the client sent
             if 'email' in data:
                 # Check email with database
-                if database.auth.check_email(data['email']):
+                if database.check_email(data['email']):
                     user_email = data['email']
 
                     # Send recovery code to user
@@ -547,11 +547,11 @@ async def account_recovery(websocket: WebSocket):
                 username = database.get_username_from_email(user_email)
 
                 # Update password and salt in database
-                database.update.update_password(username, password_hash['password'])
-                database.update.update_user_salt(username, password_hash['salt'])
+                database.update_password(username, password_hash['password'])
+                database.update_user_salt(username, password_hash['salt'])
 
                 # Get user token
-                token = database.info.retrieve_user_token(username)
+                token = database.retrieve_user_token(username)
 
                 await websocket.send_json({"responseType": "passwordUpdated", "username": username, "token": token})
             else:
