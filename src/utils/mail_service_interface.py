@@ -36,7 +36,7 @@ def send_recovery_email(email):
             "recipient": email
         },
         data=email_body,
-        timeout=5
+        timeout=15
     )
 
     return recovery_code
