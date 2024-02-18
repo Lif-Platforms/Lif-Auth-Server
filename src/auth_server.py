@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, Header
+from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from typing import Optional
 import os
 import yaml
 import json
@@ -561,7 +562,7 @@ async def get_username(account_id: str):
     return database.get_username(account_id=account_id)
 
 @app.get('/get_profile/{username}', response_class=HTMLResponse)
-async def get_profile(username: str):
+async def get_profile(username: str, service_url: str = "NA"):
     # Check to ensure provided user exists
     user_exist = database.check_username(username)
 
@@ -577,8 +578,9 @@ async def get_profile(username: str):
         html_document = document.read()
         document.close()
 
-    # Add username to html
+    # Add username and to html
     html_document = html_document.replace("{{USERNAME}}", username)
+    html_document = html_document.replace("{{SERVICE_URL}}", service_url)
 
     # Return HTML document
     return html_document

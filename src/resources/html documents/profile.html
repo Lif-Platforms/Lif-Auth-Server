@@ -13,8 +13,6 @@
     // Get theme value
     const themeValue = urlParams.get('theme');
 
-    console.log(themeValue)
-
     // Set theme
     if (themeValue === "dark") {
         document.documentElement.style.setProperty("--bg-color", "black");
@@ -114,6 +112,7 @@
         <img id="user-avatar" alt="User Avatar" class="user-avatar">
     </div> 
     <h1 class="username" id="username">{{USERNAME}}</h1>
+    <p>{{USER_BIO}}</p>
     <div class="action-button-container">
         <button class="action-button" onclick="handle_my_lif()" id="btn-1">Manage Account</button>
         <button class="action-button" id="btn-2">Log Out</button>
@@ -127,7 +126,7 @@
     }
 
     function handle_login() {
-        window.top.location.href = "https://my.lifplatforms.com/login";
+        window.top.location.href = "https://my.lifplatforms.com/#/login?redirect={{SERVICE_URL}}";
     }
 </script>
 <script>
