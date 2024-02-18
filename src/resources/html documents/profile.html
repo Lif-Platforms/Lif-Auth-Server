@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://lifplatforms.com/service%20resources/auth-cookie-manager.js"></script>
     <title>{{USERNAME}}'s Profile</title>
 </head>
 <!--Get URL parameters and set theme accordingly-->
@@ -84,6 +85,16 @@
         border: 1px solid black;
     }
 
+    .user-bio {
+        text-align: center;
+        color: var(--btn-fg);
+        font-family: Arial, Helvetica, sans-serif;
+        display: block;
+        overflow: auto;
+        max-height: 70px;
+        word-wrap: break-word
+    }
+
     /* width */
     ::-webkit-scrollbar {
     width: 5px;
@@ -112,10 +123,10 @@
         <img id="user-avatar" alt="User Avatar" class="user-avatar">
     </div> 
     <h1 class="username" id="username">{{USERNAME}}</h1>
-    <p>{{USER_BIO}}</p>
+    <p class="user-bio">{{USER_BIO}}</p>
     <div class="action-button-container">
         <button class="action-button" onclick="handle_my_lif()" id="btn-1">Manage Account</button>
-        <button class="action-button" id="btn-2">Log Out</button>
+        <button class="action-button" id="btn-2" onclick="handle_logout()">Log Out</button>
         <button class="action-button" id="btn-3" onclick="handle_login()">Log In</button>
     </div>
 </body>
@@ -127,6 +138,15 @@
 
     function handle_login() {
         window.top.location.href = "https://my.lifplatforms.com/#/login?redirect={{SERVICE_URL}}";
+    }
+
+    function handle_logout() {
+        console.log("Logged out")
+        // Remove auth cookies using script on lifplatforms.com
+        remove_auth_cookies();
+
+        // Reload parent page
+        window.top.location.reload();
     }
 </script>
 <script>

@@ -582,6 +582,10 @@ async def get_profile(username: str, service_url: str = "NA"):
     html_document = html_document.replace("{{USERNAME}}", username)
     html_document = html_document.replace("{{SERVICE_URL}}", service_url)
 
+    # Get user bio and add it to html
+    bio = database.get_bio(username)
+    html_document = html_document.replace("{{USER_BIO}}", bio)
+
     # Return HTML document
     return html_document
 
