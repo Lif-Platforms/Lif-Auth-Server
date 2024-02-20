@@ -171,7 +171,7 @@ async def lif_login(username: str = Form(), password: str = Form()):
     # Checks if password hash was successful
     if not password_hash:
         raise HTTPException(status_code=401, detail='Invalid Login Credentials!')
-    
+
     # Verifies credentials with database
     status = database.auth.verify_credentials(username=username, password=password_hash)
     
