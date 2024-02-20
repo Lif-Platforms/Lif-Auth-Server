@@ -198,7 +198,10 @@ class info:
         cursor.execute("SELECT * FROM accounts WHERE username = %s", (username,))
         data = cursor.fetchone()
 
-        return data[6]
+        if data:
+            return data[6]
+        else:
+            return "INVALID_USER"
     
     def get_pronouns(username):
         connect_to_database()
