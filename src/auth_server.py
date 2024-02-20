@@ -284,7 +284,13 @@ async def get_user_bio(username: str):
     ### Returns:
     - **str:** Bio for the account.
     """
-    return database.info.get_bio(username=username)
+    user_bio = database.info.get_bio(username=username)
+
+    # Check if user exists
+    if user_bio != "INVALID_USER":
+        return user_bio
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
 
 @app.get("/get_user_pronouns/{username}")
 async def get_user_pronouns(username: str):
