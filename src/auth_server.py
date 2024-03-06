@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
-from typing import Optional
 import os
 import yaml
 import json
@@ -669,7 +668,7 @@ async def get_profile(username: str, service_url: str = "NA"):
     user_exist = database.auth.check_username(username)
 
     # Set username to guest if not found
-    if user_exist == False:
+    if not user_exist:
         username = "Guest"
 
     # Get HTML document path
