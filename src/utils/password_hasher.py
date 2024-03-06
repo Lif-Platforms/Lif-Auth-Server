@@ -6,7 +6,7 @@ import secrets
 # Requires username to find the hash associated with the password
 def get_hash_with_database_salt(username, password):
     # Gets the salt from the database
-    salt = database.get_password_salt(username)
+    salt = database.info.get_password_salt(username)
 
     if salt == False:
         return False  

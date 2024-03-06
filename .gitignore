@@ -10,3 +10,6 @@ access-control.yml
 
 # Ignore .pem files
 *.pem
+
+# Virtual env
+.venv
