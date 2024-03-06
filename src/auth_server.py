@@ -111,9 +111,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def home():
-    return "Welcome to Lif Auth Server!"
+@app.api_route("/", methods=["GET", "HEAD"])
+async def main():
+    return "Welcome to the Lif Auth Server!"
 
 @app.get("/login/{username}/{password}")
 async def login(username: str, password: str):
