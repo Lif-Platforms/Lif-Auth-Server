@@ -153,6 +153,7 @@ async def login(username: str, password: str):
         return {"Status": "Unsuccessful", "Token": "None", "Suspended": False}
 
 @app.post('/lif_login')
+@app.post('/auth/login')
 async def lif_login(username: str = Form(), password: str = Form()):
     """
     ## Login Route For Lif Accounts (NEW)
@@ -189,6 +190,7 @@ async def lif_login(username: str = Form(), password: str = Form()):
         raise HTTPException(status_code=401, detail='Incorrect Login Credentials')
     
 @app.post("/update_pfp")
+@app.post("/account/update_avatar")
 async def update_pfp(file: UploadFile = File(), username: str = Form(), token: str = Form()):
     """
     ## Update User Avatar (Profile Picture)
@@ -219,6 +221,7 @@ async def update_pfp(file: UploadFile = File(), username: str = Form(), token: s
         raise HTTPException(status_code=401, detail="Invalid Token!")
 
 @app.post("/update_profile_banner")
+@app.post("/account/update_profile_banner")
 async def update_banner(file: UploadFile = File(), username: str = Form(), token: str = Form()):
     """
     ## Update User Banner
@@ -249,6 +252,7 @@ async def update_banner(file: UploadFile = File(), username: str = Form(), token
         raise HTTPException(status_code=401, detail="Invalid Token!")
 
 @app.post('/update_account_info/personalization')
+@app.post('/account/update_info/personalization')
 async def update_account_info(username: str = Form(), token: str = Form(), bio: str = Form(), pronouns: str = Form()):
     """
     ## Update User Account Info
@@ -273,6 +277,7 @@ async def update_account_info(username: str = Form(), token: str = Form(), bio: 
         raise HTTPException(status_code=401, detail="Invalid Token!")
 
 @app.get("/get_user_bio/{username}")
+@app.get("/profile/get_bio/{username}")
 async def get_user_bio(username: str):
     """
     ## Get User Account Bio
@@ -293,10 +298,12 @@ async def get_user_bio(username: str):
         raise HTTPException(status_code=404, detail="User not found")
 
 @app.get("/get_user_pronouns/{username}")
+@app.get("/profile/get_pronouns/{username}")
 async def get_user_pronouns(username: str):
     return database.info.get_pronouns(username=username)
     
 @app.get('/get_account_info/{data}/{account}')
+@app.get('/account/get_info/{data}/{account}')
 async def get_account_data(data, account, request: Request):
     """
     ## Get Account Info
@@ -353,6 +360,7 @@ async def verify_token(username: str, token: str):
         return {"Status": "Unsuccessful"}
 
 @app.get("/get_pfp/{username}")
+@app.get("/profile/get_avatar/{username}")
 async def get_pfp(username: str):
     """
     ## Get User Avatar (Profile Picture)
@@ -378,6 +386,7 @@ async def get_pfp(username: str):
         return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
 
 @app.get("/get_banner/{username}")
+@app.get("/profile/get_banner/{username}")
 async def get_banner(username: str):
     """
     ## Get User Banner
@@ -403,6 +412,7 @@ async def get_banner(username: str):
         return FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
     
 @app.post("/create_lif_account")
+@app.post("/account/create_account")
 async def create_lif_account(request: Request):
     """
     ## Create Lif Account (NEW)
@@ -446,6 +456,7 @@ async def create_lif_account(request: Request):
     return {"Status": "Ok"}  
 
 @app.get("/check_account_info_usage/{type}/{info}")
+@app.get("/account/check_info_usage/{type}/{info}")
 async def check_account_info_usage(type: str, info: str):
     """
     ## Check Account Info Usage
@@ -520,6 +531,7 @@ async def create_account(username: str, email: str, password: str):
     return {"status": "ok"}
 
 @app.post('/suspend_account')
+@app.post('/auth/suspend_account')
 async def suspend_account(account_id: str = Form(), access_token: str = Form()):
     """
     ## Suspend User Account
@@ -546,6 +558,7 @@ async def suspend_account(account_id: str = Form(), access_token: str = Form()):
         raise HTTPException(status_code=401, detail="Invalid Token")
 
 @app.websocket('/lif_account_recovery')
+@app.websocket('/account/account_recovery')
 async def account_recovery(websocket: WebSocket):
     await websocket.accept()
 
@@ -605,6 +618,7 @@ async def account_recovery(websocket: WebSocket):
             break
 
 @app.post('/lif_password_update')
+@app.post('/account/update_password')
 async def lif_password_update(username: str = Form(), current_password: str = Form(), new_password: str = Form()):
     """
     ## Update Account Password
@@ -636,6 +650,7 @@ async def lif_password_update(username: str = Form(), current_password: str = Fo
     else: 
         raise HTTPException(status_code=401, detail="Invalid Password!")
 
+@app.post('/auth/verify_token')
 @app.post('/verify_lif_token')
 async def verify_lif_token(username: str = Form(), token: str = Form()):
     """
@@ -659,10 +674,12 @@ async def verify_lif_token(username: str = Form(), token: str = Form()):
         raise HTTPException(status_code=401, detail="Invalid Token!")
     
 @app.get('/get_username/{account_id}')
+@app.get('/account/get_username/{account_id}')
 async def get_username(account_id: str):
     return database.info.get_username(account_id=account_id)
 
 @app.get('/get_profile/{username}', response_class=HTMLResponse)
+@app.get('/profile/get_profile/{username}', response_class=HTMLResponse)
 async def get_profile(username: str, service_url: str = "NA"):
     # Check to ensure provided user exists
     user_exist = database.auth.check_username(username)
