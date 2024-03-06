@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 import os
 import yaml
 import json
@@ -661,6 +661,34 @@ async def verify_lif_token(username: str = Form(), token: str = Form()):
 @app.get('/get_username/{account_id}')
 async def get_username(account_id: str):
     return database.info.get_username(account_id=account_id)
+
+@app.get('/get_profile/{username}', response_class=HTMLResponse)
+async def get_profile(username: str, service_url: str = "NA"):
+    # Check to ensure provided user exists
+    user_exist = database.auth.check_username(username)
+
+    # Set username to guest if not found
+    if not user_exist:
+        username = "Guest"
+
+    # Get HTML document path
+    document_path = os.path.join(os.path.dirname(__file__), "resources/html documents/profile.html")
+
+    # Read HTML document
+    with open(document_path, "r") as document:
+        html_document = document.read()
+        document.close()
+
+    # Add username and to html
+    html_document = html_document.replace("{{USERNAME}}", username)
+    html_document = html_document.replace("{{SERVICE_URL}}", service_url)
+
+    # Get user bio and add it to html
+    bio = database.info.get_bio(username)
+    html_document = html_document.replace("{{USER_BIO}}", bio)
+
+    # Return HTML document
+    return html_document
 
 if __name__ == '__main__':
     import uvicorn
