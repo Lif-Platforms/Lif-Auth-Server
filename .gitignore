@@ -13,3 +13,6 @@ access-control.yml
 
 # Virtual env
 .venv
+
+# Logs folder
+logs/
