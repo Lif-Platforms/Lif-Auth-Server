@@ -89,6 +89,9 @@ mail_service.set_config(configurations['mail-service-token'], configurations['ma
 
 print(__env__)
 
+# Get logging config
+log_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "log_config.ini")
+
 # Enable/disable developer docs based on env
 if __env__ == 'PRODUCTION':
     enable_dev_docs = None
@@ -740,4 +743,4 @@ async def get_profile(username: str, service_url: str = "NA"):
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=8002, log_config=log_config_file)
