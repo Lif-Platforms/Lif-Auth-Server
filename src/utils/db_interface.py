@@ -229,6 +229,15 @@ class info:
         data = cursor.fetchone()
 
         return data[1]
+    
+    def get_user_id(username: str):
+        connect_to_database()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT user_id FROM accounts WHERE username = %s", (username,))
+        data = cursor.fetchone()
+
+        return data[0]
 
 # Class for update related functions
 class update:
@@ -275,6 +284,14 @@ class update:
 
         # Set role of user
         cursor.execute("UPDATE accounts SET role = %s WHERE user_id = %s", (role, account_id,))
+        conn.commit()
+
+    def update_email(account_id: str, email: str):
+        connect_to_database()
+        cursor = conn.cursor()
+
+        # Update user email
+        cursor.execute("UPDATE accounts SET email = %s WHERE user_id = %s", (email, account_id,))
         conn.commit()
 
 def get_username_from_email(email):

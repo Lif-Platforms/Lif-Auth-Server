@@ -635,6 +635,37 @@ async def lif_password_update(username: str = Form(), current_password: str = Fo
         return JSONResponse(status_code=200, content='Updated Password')
     else: 
         raise HTTPException(status_code=401, detail="Invalid Password!")
+    
+@app.post('/account/update_email')
+def update_email(username: str = Form(), password: str = Form(), email: str = Form()):
+    # Get password hash
+    password_hash = hasher.get_hash_with_database_salt(username, password)
+
+    # Verify login credentials
+    auth_status = database.auth.verify_credentials(username, password_hash)
+
+    if auth_status == 'OK':
+        # Check if email is valid
+        if email_interface.is_valid_email(email):        
+            # Check if email is already in use
+            if not database.auth.check_email(email):
+                # Get account ID
+                account_id = database.info.get_user_id(username)
+
+                # Update email
+                database.update.update_email(account_id, email)
+
+                return "Ok"
+            
+            else:
+                raise HTTPException(status_code=409, detail="Email already in use!")
+        else:
+            raise HTTPException(status_code=400, detail="Email is not valid!")
+
+    elif auth_status == 'ACCOUNT_SUSPENDED':
+        raise HTTPException(status_code=403, detail="Account Suspended!")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid Credentials")
 
 @app.post('/verify_lif_token')
 async def verify_lif_token(username: str = Form(), token: str = Form()):
