@@ -683,14 +683,9 @@ async def get_profile(username: str, service_url: str = "NA"):
     html_document = html_document.replace("{{USERNAME}}", username)
     html_document = html_document.replace("{{SERVICE_URL}}", service_url)
 
-    # Get user bio from database
+    # Get user bio and add it to html
     bio = database.info.get_bio(username)
-
-    # Check if a bio is set
-    if bio:
-        html_document = html_document.replace("{{USER_BIO}}", bio)
-    else:
-        html_document = html_document.replace("{{USER_BIO}}", "")
+    html_document = html_document.replace("{{USER_BIO}}", bio)
 
     # Return HTML document
     return html_document
