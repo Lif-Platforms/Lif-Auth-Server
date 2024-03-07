@@ -17,4 +17,4 @@ COPY /src /app/
 EXPOSE 8002
 
 # Command to run the Fast API app when the container starts
-CMD ["uvicorn", "auth_server:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["python", "auth_server.py"]
