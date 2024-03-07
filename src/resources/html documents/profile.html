@@ -141,12 +141,12 @@
     }
 
     function handle_logout() {
-        console.log("Logged out")
+        console.log("Logged out");
         // Remove auth cookies using script on lifplatforms.com
         remove_auth_cookies();
 
-        // Reload parent page
-        window.top.location.reload();
+        // Send request to reload the page
+        window.parent.postMessage("WINDOW_RELOAD", "{{SERVICE_URL}}");
     }
 </script>
 <script>
@@ -184,11 +184,11 @@
             button_3.style.display = "block";
             
         } else {
-            // Hide manage account and log out buttons
+            // Show manage account and log out buttons
             button_1.style.display = "block";
             button_2.style.display = "block";
 
-            // Show log in button
+            // Hide log in button
             button_3.style.display = "none";
         }
     });
