@@ -443,6 +443,9 @@ async def create_lif_account(request: Request):
     # Create user account
     database.auth.create_account(username=username, password=password_hash['password'], email=email, password_salt=password_hash['salt'])
 
+    # Send welcome email
+    mail_service.send_welcome_email(email)
+
     return {"Status": "Ok"}  
 
 @app.get("/check_account_info_usage/{type}/{info}")
