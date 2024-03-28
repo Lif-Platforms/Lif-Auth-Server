@@ -738,7 +738,7 @@ async def get_profile(username: str, service_url: str = "NA"):
     bio = database.info.get_bio(username)
 
     # Check if user has a set bio
-    if type(bio) == str:
+    if isinstance(bio, str):
         # Check if user is valid
         if bio == "INVALID_USER":
             # Set the bio to be blank
@@ -747,9 +747,9 @@ async def get_profile(username: str, service_url: str = "NA"):
             # Add bio to panel
             html_document = html_document.replace("{{USER_BIO}}", bio)
 
-    elif bio == None:
+    elif bio is None:
         # Set the bio to be blank
-         html_document = html_document.replace("{{USER_BIO}}", "")
+        html_document = html_document.replace("{{USER_BIO}}", "")
 
     # Return HTML document
     return html_document
