@@ -145,8 +145,8 @@
         // Remove auth cookies using script on lifplatforms.com
         remove_auth_cookies();
 
-        // Reload parent page
-        window.top.location.reload();
+        // Send request to reload the page
+        window.parent.postMessage("WINDOW_RELOAD", "{{SERVICE_URL}}");
     }
 </script>
 <script>
