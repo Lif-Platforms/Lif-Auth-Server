@@ -704,28 +704,50 @@ def update_email(username: str = Form(), password: str = Form(), email: str = Fo
     else:
         raise HTTPException(status_code=401, detail="Invalid Credentials")
 
-@app.post('/auth/verify_token')
-@app.post('/verify_lif_token')
-async def verify_lif_token(username: str = Form(), token: str = Form()):
+@app.api_route('/auth/verify_token', methods=["POST", "GET"])
+@app.api_route('/verify_lif_token', methods=["POST", "GET"])
+async def verify_lif_token(request: Request, username: str = Form(None), token: str = Form(None)):
     """
     ## Verify Lif Token (NEW)
     Handles the verification of Lif user tokens. 
     
-    ### Parameters:
+    ### Parameters (POST):
     - **username (str):** The username for the account.
     - **token (str):** The token for the account.
+
+    ### Cookies (GET):
+    - **LIF_USERNAME:** The username for the account.
+    - **LIF_TOKEN:** The token for the account.
 
     ### Returns:
     - **JSON:** Status of the operation.
     """
-    # Gets token from database
-    database_token = database.info.retrieve_user_token(username=username)
+    # Check verification method
+    if request.method == "POST":
+        # Gets token from database
+        database_token = database.info.retrieve_user_token(username=username)
 
-    # Check given token against database token
-    if token == database_token:
-        JSONResponse(status_code=200, content='Token is valid!')
+        # Check given token against database token
+        if token == database_token:
+            return JSONResponse(status_code=200, content='Token is valid!')
+        else:
+            raise HTTPException(status_code=401, detail="Invalid Token!")
+        
+    elif request.method == "GET":
+        # Get username and token cookies
+        username_cookie = request.cookies.get("LIF_USERNAME")
+        token_cookie = request.cookies.get("LIF_TOKEN")
+
+        # Gets token from database
+        database_token = database.info.retrieve_user_token(username=username_cookie)
+
+        # Check given token against database token
+        if token_cookie == database_token:
+            return JSONResponse(status_code=200, content='Token is valid!')
+        else:
+            raise HTTPException(status_code=401, detail="Invalid Token!")
     else:
-        raise HTTPException(status_code=401, detail="Invalid Token!")
+        raise HTTPException(status_code=405, detail="Method Not Allowed")
     
 @app.get('/get_username/{account_id}')
 @app.get('/account/get_username/{account_id}')
