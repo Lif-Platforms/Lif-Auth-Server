@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from starlette.responses import Response
 import os
 import yaml
 import json
@@ -191,6 +192,25 @@ async def lif_login(username: str = Form(), password: str = Form()):
     else: 
         # Tells client credentials are incorrect
         raise HTTPException(status_code=401, detail='Incorrect Login Credentials')
+    
+@app.get("/auth/logout")
+async def log_out():
+    """
+    ## Logout Route For Lif Accounts
+    Handles the logout process for Lif Accounts.
+
+    ### Parameters:
+    none
+
+    ### Returns:
+    - **STRING:** Status of the operation.
+    """
+    # Delete auth cookies with domain .lifplatforms.com
+    response = Response()
+    response.delete_cookie("LIF_USERNAME", domain=".lifplatforms.com")
+    response.delete_cookie("LIF_TOKEN", domain=".lifplatforms.com")
+
+    return response
     
 @app.post("/update_pfp")
 @app.post("/account/update_avatar")
