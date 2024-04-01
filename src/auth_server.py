@@ -158,7 +158,7 @@ async def login(username: str, password: str):
 
 @app.post('/lif_login')
 @app.post('/auth/login')
-async def lif_login(username: str = Form(), password: str = Form()):
+async def lif_login(request: Request, username: str = Form(), password: str = Form()):
     """
     ## Login Route For Lif Accounts (NEW)
     Handles the authentication process for Lif Accounts.
@@ -170,6 +170,9 @@ async def lif_login(username: str = Form(), password: str = Form()):
     ### Returns:
     - **JSON:** Token for user account.
     """
+    # Get route version
+    version = request.headers.get("version")
+
     # Gets password hash
     password_hash = hasher.get_hash_with_database_salt(username=username, password=password)
 
@@ -184,7 +187,16 @@ async def lif_login(username: str = Form(), password: str = Form()):
         # Gets token from database
         token = database.info.retrieve_user_token(username=username)
 
-        return {'token': token}
+        # Check version number
+        if version == "1.1":
+            # Set auth cookies
+            response = Response()
+            response.set_cookie(key="LIF_USERNAME", value=username, domain=".lifplatforms.com")
+            response.set_cookie(key="LIF_TOKEN", value=token, domain=".lifplatforms.com")
+
+            return response
+        else:
+            return {'token': token}
     
     elif status == "ACCOUNT_SUSPENDED":
         raise HTTPException(status_code=403, detail="Account Suspended!")
