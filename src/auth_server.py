@@ -159,7 +159,7 @@ async def login(username: str, password: str):
 
 @app.post('/lif_login')
 @app.post('/auth/login')
-async def lif_login(username: str = Form(), password: str = Form(), permissions: str = None):
+async def lif_login(request: Request, response: Response, username: str = Form(), password: str = Form(), permissions: str = None):
     """
     ## Login Route For Lif Accounts (NEW)
     Handles the authentication process for Lif Accounts.
@@ -190,6 +190,10 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
     if status == "OK":
         # Gets token from database
         token = database.info.retrieve_user_token(username=username)
+        
+        # Set auth cookies
+        response.set_cookie(key="LIF_USERNAME", value=username, domain=".lifplatforms.com")
+        response.set_cookie(key="LIF_TOKEN", value=token, domain=".lifplatforms.com")
 
         # Check if required permissions were given
         if permissions is not None:
