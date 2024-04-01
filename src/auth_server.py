@@ -174,6 +174,9 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
     ### Returns:
     - **JSON:** Token for user account.
     """
+    # Get route version
+    version = request.headers.get("version")
+
     # Gets password hash
     password_hash = hasher.get_hash_with_database_salt(username=username, password=password)
 
