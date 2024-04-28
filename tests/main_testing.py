@@ -49,10 +49,9 @@ if result.status_code == 200:
         token = content['Token']
     else:
         logger.error(f"X Test {str(test_number)} FAILED! Status: {content['Status']}")
-        quit()
+
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -67,7 +66,6 @@ if result.status_code == 200:
 
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -87,10 +85,9 @@ if result.status_code == 200:
 
     else:
         logger.error(f"X Test {str(test_number)} FAILED!")
-        quit()
+
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -110,10 +107,9 @@ if result.status_code == 200:
 
     else:
         logger.error(f"X Test {str(test_number)} FAILED!")
-        quit()
+
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -133,7 +129,6 @@ if result.status_code == 200:
 
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -148,7 +143,6 @@ if result.status_code == 200:
 
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -163,7 +157,6 @@ if result.status_code == 200:
 
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -182,7 +175,6 @@ if result.status_code == 200:
     logger.info(f"✓ Test {str(test_number)} PASSED!")
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -200,10 +192,9 @@ if result.status_code == 200:
         logger.info(f"✓ Test {str(test_number)} PASSED!")
     else:
         logger.error(f"X Test {str(test_number)} FAILED! Status: {content['Status']}")
-        quit()
+
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -216,7 +207,6 @@ if result.status_code == 200:
     logger.info(f"✓ Test {str(test_number)} PASSED!")
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
 
 test_number += 1
 
@@ -229,7 +219,6 @@ if result.status_code == 200:
     logger.info(f"✓ Test {str(test_number)} PASSED!")
 else:
     logger.error(f"X Test {str(test_number)} FAILED!")
-    quit()
 
 test_number += 1
 
@@ -258,7 +247,69 @@ if result.status_code == 200:
 
     else:
         logger.error(f"X Test {str(test_number)} FAILED! Status: {content['Status']}")
-        quit()
+
 else:
     logger.error(f"X Test {str(test_number)} FAILED! Status Code: {str(result.status_code)}")
-    quit()
+
+test_number += 1
+
+logger.info("Testing Account Info Check...")
+print("Enter an account that DOES already exist.")
+
+account_username = input("Username: ")
+account_email = input("Email: ")
+
+result = requests.get(f"{auth_url}/check_account_info_usage/username/{account_username}")
+
+if result.status_code == 409:
+    logger.info(f"✓ Test {test_number}a PASSED!")
+
+else:
+    logger.info(f"X Test {test_number}a FAILED!")
+
+result = requests.get(f"{auth_url}/check_account_info_usage/email/{account_email}")
+
+if result.status_code == 409:
+    logger.info(f"✓ Test {test_number}b PASSED!")
+
+else:
+    logger.info(f"X Test {test_number}b FAILED!")
+
+print("Enter an account that DOES NOT already exist.")
+
+account_username = input("Username: ")
+account_email = input("Email: ")
+
+result = requests.get(f"{auth_url}/check_account_info_usage/username/{account_username}")
+
+if result.status_code == 200:
+    logger.info(f"✓ Test {test_number}c PASSED!")
+
+else:
+    logger.info(f"X Test {test_number}c FAILED!")
+
+result = requests.get(f"{auth_url}/check_account_info_usage/email/{account_email}")
+
+if result.status_code == 200:
+    logger.info(f"✓ Test {test_number}d PASSED!")
+
+else:
+    logger.info(f"X Test {test_number}d FAILED!")
+
+test_number += 1
+
+logger.info("Testing Account Creation (DEPRECIATED)...")
+print("Enter credentials for a new account")
+
+account_username = input("Username: ")
+account_email = input("Email: ")
+account_password = input("Password: ")
+
+result = requests.get(f"{auth_url}/create_account/{account_username}/{account_email}/{account_password}")
+
+if result.json()['status'] == "ok":
+    logger.info(f"✓ Test {test_number} PASSED!")
+
+else:
+    logger.info(f"X Test {test_number} FAILED!")
+    
