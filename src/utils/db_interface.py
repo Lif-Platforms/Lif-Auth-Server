@@ -85,16 +85,24 @@ class auth:
         cursor.execute("SELECT * FROM accounts")
         items = cursor.fetchall()
 
-        found_token = False
+        token_status = 'INVALID'
 
         for user in items:
             database_user = user[1]
             database_token = user[4]
 
             if database_user == username and database_token == token:
-                found_token = True
+                # Get user role
+                cursor.execute("SELECT role FROM accounts WHERE username = %s", (username,))
+                role = cursor.fetchone()
 
-        return found_token
+                # Check if user is suspended
+                if role == "SUSPENDED":
+                    token_status = "SUSPENDED"
+                else:
+                    token_status = "Ok"
+
+        return token_status
     
     def check_username(username):
         connect_to_database()
