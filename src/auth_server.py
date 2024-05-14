@@ -799,6 +799,56 @@ async def get_profile(username: str, service_url: str = "NA"):
     # Return HTML document
     return html_document
 
+@app.route("/auth/update_permissions", methods=["POST", "DELETE"])
+async def get_body(request: Request):
+    """
+    ## Update Permissions
+    Updates the user permissions for Lif Accounts. 
+    
+    ### Parameters:
+    - **account_id (str):** The id for the account.
+    - **node (str):** The permission node you wish to add/delete.
+    - **access_token (str):** Your access token for Auth Server.
+
+    ### Returns:
+    - **JSON:** Status of the operation.
+    """
+    data = await request.json()
+
+    # Get data from json
+    account_id = data["account_id"]
+    node = data["permission_node"]
+    access_token = data["access_token"]
+
+    # Verify access token
+    status = access_control.verify_token(access_token)
+
+    if status:
+        # Check access token perms
+        status = access_control.has_perms(access_token, "account.permissions")
+
+        if status:
+            # Check is user exists
+            if database.auth.check_user_exists(account_id, "ACCOUNT_ID"):
+                # Check HTTP method being used
+                if request.method == "POST":
+                    # Add permission node
+                    database.update.add_permission_node(account_id, node)
+
+                    return "Permission Added!"
+
+                elif request.method == "DELETE":
+                    # Add permission node
+                    database.update.remove_permission_node(account_id, node)
+
+                    return "Permission Removed!"
+            else:
+                raise HTTPException(status_code=404, detail="User Not Found")
+        else:
+            raise HTTPException(status_code=403, detail="No Permission")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid Token")
+
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8002, log_config=log_config_file)
