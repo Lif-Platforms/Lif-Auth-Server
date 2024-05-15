@@ -151,6 +151,50 @@ class auth:
 
         conn.commit()
         cursor.close()
+
+    def check_user_exists(account: str, mode: str):
+        connect_to_database()
+
+        # Define database cursor
+        cursor = conn.cursor()
+
+        # Check mode
+        if mode == "ACCOUNT_ID":
+            cursor.execute("SELECT * FROM accounts WHERE user_id = %s", (account,))
+            account = cursor.fetchone()
+
+            # Check if user exists
+            if account:
+                return True
+            else:
+                return False
+            
+        elif mode == "USERNAME":
+            cursor.execute("SELECT * FROM accounts WHERE username = %s", (id,))
+            account = cursor.fetchone()
+
+            # Check if user exists
+            if account:
+                return True
+            else:
+                return False
+            
+    def check_account_permission(account_id: str, node: str):
+        connect_to_database()
+
+        # Define database cursor
+        cursor = conn.cursor()
+
+        # Get permissions
+        cursor.execute("SELECT * FROM permissions WHERE account_id = %s AND node = %s", (account_id, node,))
+        perms = cursor.fetchall()
+
+        # Check if user had required perm
+        if perms:
+            return True
+        else:
+            return False
+
             
 # Class for info get related functions
 class info:
@@ -292,6 +336,22 @@ class update:
 
         # Update user email
         cursor.execute("UPDATE accounts SET email = %s WHERE user_id = %s", (email, account_id,))
+        conn.commit()
+
+    def add_permission_node(account_id: str, node: str):
+        connect_to_database()
+        cursor = conn.cursor()
+
+        # Add user permissions
+        cursor.execute("INSERT INTO permissions (account_id, node) VALUES (%s, %s)", (account_id, node,))
+        conn.commit()
+
+    def remove_permission_node(account_id: str, node: str):
+        connect_to_database()
+        cursor = conn.cursor()
+
+        # Remove user permissions
+        cursor.execute("DELETE FROM permissions WHERE account_id = %s AND node = %s", (account_id, node,))
         conn.commit()
 
 def get_username_from_email(email):
