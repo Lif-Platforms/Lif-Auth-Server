@@ -188,7 +188,7 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
         token = database.info.retrieve_user_token(username=username)
 
         # Check if required permissions were given
-        if permissions != None:
+        if permissions is not None:
             # Separate permissions
             perms = permissions.split(",")
 
@@ -761,7 +761,7 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
     # Check the permissions of an account
     def check_perms(username: str):
         # Check if perms are supplied
-        if permissions != None:
+        if permissions is not None:
             # Get perms list
             perms = permissions.split(",")
 

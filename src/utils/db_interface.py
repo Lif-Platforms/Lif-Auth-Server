@@ -152,7 +152,7 @@ class auth:
         conn.commit()
         cursor.close()
 
-    def check_user_exists(id: str, mode: str):
+    def check_user_exists(account: str, mode: str):
         connect_to_database()
 
         # Define database cursor
@@ -160,7 +160,7 @@ class auth:
 
         # Check mode
         if mode == "ACCOUNT_ID":
-            cursor.execute("SELECT * FROM accounts WHERE user_id = %s", (id,))
+            cursor.execute("SELECT * FROM accounts WHERE user_id = %s", (account,))
             account = cursor.fetchone()
 
             # Check if user exists
