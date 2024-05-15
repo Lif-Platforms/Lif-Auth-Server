@@ -179,6 +179,23 @@ class auth:
             else:
                 return False
             
+    def check_account_permission(account_id: str, node: str):
+        connect_to_database()
+
+        # Define database cursor
+        cursor = conn.cursor()
+
+        # Get permissions
+        cursor.execute("SELECT * FROM permissions WHERE account_id = %s AND node = %s", (account_id, node,))
+        perms = cursor.fetchall()
+
+        # Check if user had required perm
+        if perms:
+            return True
+        else:
+            return False
+
+            
 # Class for info get related functions
 class info:
     # Get user salt

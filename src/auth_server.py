@@ -158,7 +158,7 @@ async def login(username: str, password: str):
 
 @app.post('/lif_login')
 @app.post('/auth/login')
-async def lif_login(username: str = Form(), password: str = Form()):
+async def lif_login(username: str = Form(), password: str = Form(), permissions: str = None):
     """
     ## Login Route For Lif Accounts (NEW)
     Handles the authentication process for Lif Accounts.
@@ -166,6 +166,9 @@ async def lif_login(username: str = Form(), password: str = Form()):
     ### Parameters:
     - **username (str):** The username of the account.
     - **password (str):** The password for the account.
+
+    ### Query Parameters:
+    - **permissions:** List of required permission nodes for successful authentication
 
     ### Returns:
     - **JSON:** Token for user account.
@@ -184,7 +187,34 @@ async def lif_login(username: str = Form(), password: str = Form()):
         # Gets token from database
         token = database.info.retrieve_user_token(username=username)
 
-        return {'token': token}
+        # Check if required permissions were given
+        if permissions != None:
+            # Separate permissions
+            perms = permissions.split(",")
+
+            # Get account id
+            account_id = database.info.get_user_id(username)
+
+            # Keep track of checks
+            # In order for a successful authentication the checks must equal the number of permission nodes provided
+            checks = 0
+
+            # Check each perm
+            for perm in perms:
+                status = database.auth.check_account_permission(account_id, perm)
+
+                # Check status and update checks
+                if status:
+                    checks += 1
+
+            # Check is all checks were successful
+            if checks == len(perms):
+                return {'token': token}
+            
+            else:
+                raise HTTPException(status_code=403, detail="No Permission")
+        else:
+            return {'token': token}
     
     elif status == "ACCOUNT_SUSPENDED":
         raise HTTPException(status_code=403, detail="Account Suspended!")
@@ -709,7 +739,7 @@ def update_email(username: str = Form(), password: str = Form(), email: str = Fo
 
 @app.api_route('/auth/verify_token', methods=["POST", "GET"])
 @app.api_route('/verify_lif_token', methods=["POST", "GET"])
-async def verify_lif_token(request: Request, username: str = Form(None), token: str = Form(None)):
+async def verify_lif_token(request: Request, username: str = Form(None), token: str = Form(None), permissions: str = None):
     """
     ## Verify Lif Token (NEW)
     Handles the verification of Lif user tokens. 
@@ -722,9 +752,43 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
     - **LIF_USERNAME:** The username for the account.
     - **LIF_TOKEN:** The token for the account.
 
+    ### Query Parameters:
+    - **permissions:** List of required permission nodes for successful authentication
+
     ### Returns:
     - **JSON:** Status of the operation.
     """
+    # Check the permissions of an account
+    def check_perms(username: str):
+        # Check if perms are supplied
+        if permissions != None:
+            # Get perms list
+            perms = permissions.split(",")
+
+            # Get account id
+            account_id = database.info.get_user_id(username)
+
+            # Keep track of checks
+            # In order for a successful authentication the checks must equal the number of permission nodes provided
+            checks = 0
+
+            # Check perms
+            for perm in perms:
+                status = database.auth.check_account_permission(account_id, perm)
+
+                # Check status and update checks
+                if status:
+                    checks += 1
+
+            # Check if all checks passed
+            if checks == len(perms):
+                return True
+            
+            else:
+                return False
+        else:
+            return True
+
     # Check verification method
     if request.method == "POST":
         # Gets token from database
@@ -732,7 +796,13 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
 
         # Check given token against database token
         if token == database_token:
-            return JSONResponse(status_code=200, content='Token is valid!')
+            # Check required permissions
+            status = check_perms(username)
+
+            if status:
+                return JSONResponse(status_code=200, content='Token is valid!')
+            else:
+                raise HTTPException(status_code=403, detail="No Permission")
         else:
             raise HTTPException(status_code=401, detail="Invalid Token!")
         
@@ -746,7 +816,14 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
 
         # Check given token against database token
         if token_cookie == database_token:
-            return JSONResponse(status_code=200, content='Token is valid!')
+            # Check permissions 
+            status = check_perms(username_cookie)
+
+            if status:
+                return JSONResponse(status_code=200, content='Token is valid!')
+            
+            else:
+                raise HTTPException(status_code=403, detail="No Permission")
         else:
             raise HTTPException(status_code=401, detail="Invalid Token!")
     else:
@@ -835,13 +912,13 @@ async def get_body(request: Request):
                     # Add permission node
                     database.update.add_permission_node(account_id, node)
 
-                    return "Permission Added!"
+                    return JSONResponse(content="Permission Added")
 
                 elif request.method == "DELETE":
                     # Add permission node
                     database.update.remove_permission_node(account_id, node)
 
-                    return "Permission Removed!"
+                    return JSONResponse(content="Permission Removed")
             else:
                 raise HTTPException(status_code=404, detail="User Not Found")
         else:
