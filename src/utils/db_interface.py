@@ -275,17 +275,19 @@ class info:
         else:
             search_column = "username"
 
-        # Prepare the SELECT query with placeholders
+        # Create placeholders for the list of values
         placeholders = ', '.join(['%s'] * len(accounts))
-        query = f"SELECT * FROM accounts WHERE {search_column} IN ({placeholders})"
 
-        # Execute the query with the accounts list as parameters
-        cursor.execute(query, accounts)
+        # Generate the SQL query dynamically
+        query = "SELECT * FROM accounts WHERE {} IN ({})".format(search_column, placeholders)
 
-        # Fetch all rows
-        rows = cursor.fetchall()
+        # Execute the query with the list of values
+        cursor.execute(query, (accounts))
 
-        return rows
+        # Fetch the results
+        found_accounts = cursor.fetchall()
+
+        return found_accounts
 
     def get_username(account_id: str):
         connect_to_database()
