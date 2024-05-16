@@ -807,11 +807,10 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
 
     # Check verification method
     if request.method == "POST":
-        # Gets token from database
-        database_token = database.info.retrieve_user_token(username=username)
-
         # Check given token against database token
-        if token == database_token:
+        check_token_status = database.auth.check_token(username, token)
+        
+        if check_token_status == "Ok":
             # Check required permissions
             status = check_perms(username)
 
@@ -819,6 +818,10 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
                 return JSONResponse(status_code=200, content='Token is valid!')
             else:
                 raise HTTPException(status_code=403, detail="No Permission")
+            
+        elif check_token_status == "SUSPENDED":
+            raise HTTPException(status_code=403, detail="Account Suspended!")
+        
         else:
             raise HTTPException(status_code=401, detail="Invalid Token!")
         
@@ -827,19 +830,21 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
         username_cookie = request.cookies.get("LIF_USERNAME")
         token_cookie = request.cookies.get("LIF_TOKEN")
 
-        # Gets token from database
-        database_token = database.info.retrieve_user_token(username=username_cookie)
-
         # Check given token against database token
-        if token_cookie == database_token:
+        check_token_status = database.auth.check_token(username, token)
+
+        
+        if check_token_status == "Ok":
             # Check permissions 
             status = check_perms(username_cookie)
 
             if status:
                 return JSONResponse(status_code=200, content='Token is valid!')
-            
             else:
                 raise HTTPException(status_code=403, detail="No Permission")
+        
+        elif check_token_status == "SUSPENDED":
+            raise HTTPException(status_code=403, detail="Account Suspended!")
         else:
             raise HTTPException(status_code=401, detail="Invalid Token!")
     else:
