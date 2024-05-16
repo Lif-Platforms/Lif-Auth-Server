@@ -925,6 +925,20 @@ async def get_body(request: Request):
             raise HTTPException(status_code=403, detail="No Permission")
     else:
         raise HTTPException(status_code=401, detail="Invalid Token")
+    
+@app.get("/account/get_id/{username}")
+def get_account_id(username: str):
+    """
+    ## Get User Id
+    Get the user Id of an account from the username.
+    
+    ### Parameters:
+    - **username (str):** The username for the account.
+
+    ### Returns:
+    - **JSON:** Status of the operation.
+    """
+    return database.info.get_user_id(username)
 
 if __name__ == '__main__':
     import uvicorn
