@@ -272,12 +272,12 @@ class info:
         # Check search mode
         if search_mode == "userID":
             search_column = "user_id"
-
         else:
             search_column = "username"
 
         # Prepare the SELECT query with placeholders
-        query = f"SELECT * FROM accounts WHERE {search_column} IN ({', '.join(['%s'] * len(accounts))})"
+        placeholders = ', '.join(['%s'] * len(accounts))
+        query = f"SELECT * FROM accounts WHERE {search_column} IN ({placeholders})"
 
         # Execute the query with the accounts list as parameters
         cursor.execute(query, accounts)
@@ -286,7 +286,7 @@ class info:
         rows = cursor.fetchall()
 
         return rows
-    
+
     def get_username(account_id: str):
         connect_to_database()
         cursor = conn.cursor()
