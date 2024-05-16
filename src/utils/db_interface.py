@@ -81,20 +81,20 @@ class auth:
         connect_to_database()
         cursor = conn.cursor()
 
-        # Gets all accounts from the MySQL database
-        cursor.execute("SELECT * FROM accounts")
-        items = cursor.fetchall()
+        # Get account from database
+        cursor.execute("SELECT * FROM accounts WHERE username = %s", (username,))
+        account = cursor.fetchone()
 
-        found_token = False
+        # Check token
+        if account[4] == token:
+            # Check role
+            if account[9] != "SUSPENDED":
+                return "Ok"
+            else:
+                return "SUSPENDED"
+        else:
+            return "INVALID_TOKEN"
 
-        for user in items:
-            database_user = user[1]
-            database_token = user[4]
-
-            if database_user == username and database_token == token:
-                found_token = True
-
-        return found_token
     
     def check_username(username):
         connect_to_database()

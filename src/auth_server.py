@@ -260,7 +260,7 @@ async def update_pfp(file: UploadFile = File(), username: str = Form(), token: s
     # Verify user token
     status = database.auth.check_token(username=username, token=token)
 
-    if status == True:
+    if status == "Ok":
         # Read the contents of the profile image
         contents = await file.read()
 
@@ -270,6 +270,10 @@ async def update_pfp(file: UploadFile = File(), username: str = Form(), token: s
             write_file.close()
 
         return {'Status': 'Ok'}
+    
+    elif status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account Suspended!")
+
     else:
         raise HTTPException(status_code=401, detail="Invalid Token!")
 
@@ -291,7 +295,7 @@ async def update_banner(file: UploadFile = File(), username: str = Form(), token
     # Verify user token
     status = database.auth.check_token(username=username, token=token)
 
-    if status == True:
+    if status == "Ok":
         # Read the contents of the profile image
         contents = await file.read()
 
@@ -301,6 +305,10 @@ async def update_banner(file: UploadFile = File(), username: str = Form(), token
             write_file.close()
 
         return {'Status': 'Ok'}
+    
+    elif status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account Suspended")
+    
     else:
         raise HTTPException(status_code=401, detail="Invalid Token!")
 
@@ -321,11 +329,17 @@ async def update_account_info(username: str = Form(), token: str = Form(), bio: 
     - **JSON:** Status of the operation.
     """
     # Verify user token
-    if database.auth.check_token(username=username, token=token):
+    token_status = database.auth.check_token(username=username, token=token)
+
+    if token_status == "Ok":
         database.update.update_user_bio(username=username, data=bio)
         database.update.update_user_pronouns(username=username, data=pronouns)
 
         return JSONResponse(status_code=200, content="Updated Successfully")
+    
+    elif token_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account Suspended")
+    
     else:
         raise HTTPException(status_code=401, detail="Invalid Token!")
 
@@ -403,12 +417,14 @@ async def verify_token(username: str, token: str):
     - **dict:** Status of the operation.
     """
     # Gets token from database
-    database_token = database.info.retrieve_user_token(username=username)
+    token_status = database.auth.check_token(username=username, token=token)
 
-    if not database_token:
-        return {"Status": "Unsuccessful"}
-    elif database_token == token:
+    if token_status == "Ok":
         return {"Status": "Successful"}
+        
+    elif token_status == "SUSPENDED":
+        return {"Status": "Unsuccessful"}
+    
     else:
         return {"Status": "Unsuccessful"}
 
@@ -791,11 +807,10 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
 
     # Check verification method
     if request.method == "POST":
-        # Gets token from database
-        database_token = database.info.retrieve_user_token(username=username)
-
         # Check given token against database token
-        if token == database_token:
+        check_token_status = database.auth.check_token(username, token)
+        
+        if check_token_status == "Ok":
             # Check required permissions
             status = check_perms(username)
 
@@ -803,6 +818,10 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
                 return JSONResponse(status_code=200, content='Token is valid!')
             else:
                 raise HTTPException(status_code=403, detail="No Permission")
+            
+        elif check_token_status == "SUSPENDED":
+            raise HTTPException(status_code=403, detail="Account Suspended!")
+        
         else:
             raise HTTPException(status_code=401, detail="Invalid Token!")
         
@@ -811,19 +830,21 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
         username_cookie = request.cookies.get("LIF_USERNAME")
         token_cookie = request.cookies.get("LIF_TOKEN")
 
-        # Gets token from database
-        database_token = database.info.retrieve_user_token(username=username_cookie)
-
         # Check given token against database token
-        if token_cookie == database_token:
+        check_token_status = database.auth.check_token(username, token)
+
+        
+        if check_token_status == "Ok":
             # Check permissions 
             status = check_perms(username_cookie)
 
             if status:
                 return JSONResponse(status_code=200, content='Token is valid!')
-            
             else:
                 raise HTTPException(status_code=403, detail="No Permission")
+        
+        elif check_token_status == "SUSPENDED":
+            raise HTTPException(status_code=403, detail="Account Suspended!")
         else:
             raise HTTPException(status_code=401, detail="Invalid Token!")
     else:
