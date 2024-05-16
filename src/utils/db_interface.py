@@ -276,12 +276,10 @@ class info:
         else:
             search_column = "username"
 
-        # Prepare the SELECT query
-        query = f"SELECT * FROM accounts WHERE {search_column} IN (%s)"
-        placeholders = ', '.join(['%s'] * len(accounts))
-        query = query % placeholders
+        # Prepare the SELECT query with placeholders
+        query = f"SELECT * FROM accounts WHERE {search_column} IN ({', '.join(['%s'] * len(accounts))})"
 
-        # Execute the query
+        # Execute the query with the accounts list as parameters
         cursor.execute(query, accounts)
 
         # Fetch all rows
