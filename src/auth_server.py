@@ -357,7 +357,7 @@ async def get_user_pronouns(username: str):
     
 @app.get('/get_account_info/{data}/{account}')
 @app.get('/account/get_info/{data}/{account}')
-async def get_account_data(data, account, request: Request):
+async def get_account_data(data, account, request: Request, search_mode: str = "username"):
     """
     ## Get Account Info
     Allows services to access sensitive information on Lif Accounts.
@@ -381,7 +381,24 @@ async def get_account_data(data, account, request: Request):
         if data == "email":
             # Verify server has permission to access the requested information
             if access_control.has_perms(token=access_token, permission='account.email'): 
-                return {"email": database.info.get_user_email(username=account)}
+                # Check how the server should perform its data search
+                if account == "USE_HEADERS":
+                    # Get accounts header
+                    accounts = request.headers.get("accounts").split(",")
+
+                    # Get accounts from database
+                    database_accounts = database.info.get_bulk_emails(accounts, search_mode)
+
+                    email_list = []
+
+                    # Extract email from accounts
+                    for user_account in database_accounts:
+                        email_list.append(user_account[3])
+
+                    return email_list
+                
+                else:     
+                    return {"email": database.info.get_user_email(username=account)}
             else:
                 raise HTTPException(status_code=403, detail="No Permission!")
         else:
