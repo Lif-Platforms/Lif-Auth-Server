@@ -265,6 +265,32 @@ class info:
 
         return data[3]
     
+    def get_bulk_emails(accounts: list, search_mode: str):
+        connect_to_database()
+        cursor = conn.cursor()
+
+        # Check search mode
+        if search_mode == "userID":
+            search_column = "user_id"
+        else:
+            search_column = "username"
+
+        # Create placeholders for the list of values
+        placeholders = ', '.join(['%s'] * len(accounts))
+
+        # Generate the SQL query dynamically with parameter placeholders
+        query = f"SELECT * FROM accounts WHERE {search_column} IN ({placeholders})"
+
+        # Execute the query with the list of values
+        cursor.execute(query, accounts)
+
+        # Fetch the results
+        found_accounts = cursor.fetchall()
+
+        cursor.close()
+
+        return found_accounts
+
     def get_username(account_id: str):
         connect_to_database()
         cursor = conn.cursor()
