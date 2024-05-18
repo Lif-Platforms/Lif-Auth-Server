@@ -278,14 +278,16 @@ class info:
         # Create placeholders for the list of values
         placeholders = ', '.join(['%s'] * len(accounts))
 
-        # Generate the SQL query dynamically
-        query = "SELECT * FROM accounts WHERE {} IN ({})".format(search_column, placeholders)
+        # Generate the SQL query dynamically with parameter placeholders
+        query = f"SELECT * FROM accounts WHERE {search_column} IN ({placeholders})"
 
         # Execute the query with the list of values
-        cursor.execute(query, (accounts))
+        cursor.execute(query, accounts)
 
         # Fetch the results
         found_accounts = cursor.fetchall()
+
+        cursor.close()
 
         return found_accounts
 
