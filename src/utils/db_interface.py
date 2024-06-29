@@ -49,9 +49,23 @@ def connect_to_database():
 
 # Class for auth related functions
 class auth:
+    """
+    ## Authentication Class
+    This class handles authentication for user accounts.
+    """
     # Function for verifying user credentials
     def verify_credentials(username, password):
-
+        """
+        ## Verify Credentials
+        Handles the verification of user login credentials.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        - password (str): Password of the account.
+        
+        ### Returns
+        STRING: Literal 'OK', 'BAD_CREDENTIALS', 'ACCOUNT_SUSPENDED'.
+        """
         if password is None:
             return "BAD_CREDENTIALS"
         
@@ -78,6 +92,17 @@ class auth:
                 return "BAD_CREDENTIALS"
             
     def check_token(username: str, token: str):
+        """
+        ## Check Token
+        Handles the verification of user tokens.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        - token (str): Token of the account.
+        
+        ### Returns
+        STRING: Literal 'Ok', 'INVALID_TOKEN', 'SUSPENDED'.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -97,6 +122,16 @@ class auth:
 
     
     def check_username(username):
+        """
+        ## Check Username
+        Checks if a username exists.
+        
+        ### Parameters
+        - username (str): Username to check.
+       
+        ### Returns
+        BOOLEAN: True (Username Found), False (Username NOT Found).
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -116,6 +151,16 @@ class auth:
         return found_username
     
     def check_email(email):
+        """
+        ## Check Email
+        Checks if an email exists.
+        
+        ### Parameters
+        - email (str): Email to check.
+        
+        ### Returns
+        BOOLEAN: True (Email Found), False, (Email NOT Found).
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -135,6 +180,19 @@ class auth:
         return found_email
     
     def create_account(username, email, password, password_salt):
+        """
+        ## Create Acount
+        Handles the creation of user accounts.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        - email (str): Email of the account.
+        - password (str): Password of the account.
+        - password_salt (str): Salt for the password.
+        
+        ### Returns
+        None
+        """
         connect_to_database()
 
         # Define database cursor
@@ -153,6 +211,17 @@ class auth:
         cursor.close()
 
     def check_user_exists(account: str, mode: str):
+        """
+        ## Check User Exists
+        Checks if an account already exists in the database.
+        
+        ### Parameters
+        - account (str): Username or id of the account.
+        - mode (str): Specify if the account parameter is an 'ACCOUNT_ID' or 'USERNAME'.
+        
+        ### Returns
+        BOOLEAN: True (User Found), False (User NOT Found)'.
+        """
         connect_to_database()
 
         # Define database cursor
@@ -180,6 +249,17 @@ class auth:
                 return False
             
     def check_account_permission(account_id: str, node: str):
+        """
+        ## Check Account Permission
+        Checks the acount permissions for an account.
+        
+        ### Parameters
+        - account_id (str): UserId of the account.
+        - node (str): Permission node to check if user has.
+        
+        ### Returns
+        BOOLEAN: True (User HAS Permission), False (User DOESN'T Have Permission).
+        """
         connect_to_database()
 
         # Define database cursor
@@ -198,8 +278,22 @@ class auth:
             
 # Class for info get related functions
 class info:
+    """
+    ## Info Class
+    Handles the retrieval of info for Lif Accounts.
+    """
     # Get user salt
     def get_password_salt(username):
+        """
+        ## Get Password Salt
+        Gets the salt for a password for an account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        
+        ### Returns
+        STRING: Password salt OR BOOLEAN: False (User Not Found).
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -213,6 +307,16 @@ class info:
             return False  # Return False if no matching username is found
 
     def retrieve_user_token(username):
+        """
+        ## Retrieve User Token
+        Gets the token for an account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        
+        ### Returns
+        STRING: User token OR BOOLEAN: False (User Not Found).
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -236,6 +340,16 @@ class info:
         return found_token
     
     def get_bio(username):
+        """
+        ## Get Bio
+        Gets the bio for a user account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        
+        ### Returns
+        STRING: User bio, Literal 'INVALID_USER'.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -248,6 +362,16 @@ class info:
             return "INVALID_USER"
     
     def get_pronouns(username):
+        """
+        ## Get Pronouns
+        Gets the pronouns for a user account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        
+        ### Returns
+        STRING: User pronouns.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -257,6 +381,16 @@ class info:
         return data[7]
     
     def get_user_email(username: str):
+        """
+        ## Get User Email
+        Gets the email for a user account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        
+        ### Returns
+        STRING: User email.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -266,6 +400,17 @@ class info:
         return data[3]
     
     def get_bulk_emails(accounts: list, search_mode: str):
+        """
+        ## Get Bulk Emails
+        Allows services to supply a list of accounts and get their emails.
+        
+        ### Parameters
+        - accounts (list): List of accounts.
+        - search_mode (str): Specify if the accounts parameter is a list of 'userID' or 'username'.
+        
+        ### Returns
+        LIST: List of account emails.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -292,6 +437,16 @@ class info:
         return found_accounts
 
     def get_username(account_id: str):
+        """
+        ## Get Username
+        Gets the username from  an account id.
+        
+        ### Parameters
+        - account_id (str): The userId for the account.
+        
+        ### Returns
+        STRING: Username.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -301,6 +456,16 @@ class info:
         return data[1]
     
     def get_user_id(username: str):
+        """
+        ## Get User Id
+        Gets the account id from the username.
+        
+        ### Parameters
+        - username (str): Username of the account.
+       
+        ### Returns
+        STRING: User Id.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -311,8 +476,23 @@ class info:
 
 # Class for update related functions
 class update:
+    """
+    ## Update Class
+    Handles updating information on Lif Accounts.
+    """
     # Update user bio
     def update_user_bio(username, data):
+        """
+        ## Update User Bio
+        Handles updating the user bio.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        - data (str): The new bio.
+        
+        ### Returns
+        STRING: Literal 'Ok'.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -323,6 +503,16 @@ class update:
         return "Ok"
 
     def update_user_pronouns(username, data):
+        """
+        ## Update User Pronouns
+        Updates user pronouns for an account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        
+        ### Returns
+        STRING: Literal 'Ok'.
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -333,6 +523,17 @@ class update:
         return "Ok"
 
     def update_user_salt(username: str, salt: str):
+        """
+        ## Update User Salt
+        Updates the salt for the password of a user account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        - salt (str): New password salt.
+        
+        ### Returns
+        None
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -341,6 +542,17 @@ class update:
         conn.commit()
 
     def update_password(username: str, password: str):
+        """
+        ## Update Password
+        Updates the password of a user account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        - password (str): New password for the account.
+        
+        ### Returns
+        None
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -349,6 +561,17 @@ class update:
         conn.commit()
 
     def set_role(account_id, role):
+        """
+        ## Set Role
+        Updates the role of a Lif Account.
+        
+        ### Parameters
+        - account_id (str): UserId of the account.
+        - role (str): Role that the account will be set to.
+        
+        ### Returns
+        None
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -357,6 +580,17 @@ class update:
         conn.commit()
 
     def update_email(account_id: str, email: str):
+        """
+        ## Update Email
+        Updates the email on a Lif Account.
+        
+        ### Parameters
+        - account_id (str): UserId of the account.
+        - email (str): New email the account.
+        
+        ### Returns
+        None
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -365,6 +599,17 @@ class update:
         conn.commit()
 
     def add_permission_node(account_id: str, node: str):
+        """
+        ## Add Permission Node
+        Adds a permission node to a user.
+        
+        ### Parameters
+        - account_id (str): UserId of the account.
+        - node (str): Permission node to add to the account.
+        
+        ### Returns
+        None
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -373,6 +618,17 @@ class update:
         conn.commit()
 
     def remove_permission_node(account_id: str, node: str):
+        """
+        ## Remove Permission Node
+        Removes a permission node from an account.
+        
+        ### Parameters
+        - account_id (str): UserId of the account.
+        - node (str): Permission node to remove from the account.
+        
+        ### Returns
+        None
+        """
         connect_to_database()
         cursor = conn.cursor()
 
@@ -381,6 +637,16 @@ class update:
         conn.commit()
 
 def get_username_from_email(email):
+    """
+    ## Get Username From Email
+    Gets the username from an email address.
+    
+    ### Parameters
+    - email (str): Email of the account.
+    
+    ### Returns
+    STRING: Email of the account.
+    """
     connect_to_database()
     cursor = conn.cursor()
 
