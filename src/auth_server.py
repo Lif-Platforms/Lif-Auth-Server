@@ -224,7 +224,7 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
         raise HTTPException(status_code=401, detail='Incorrect Login Credentials')
     
 @app.get("/auth/logout")
-async def log_out(request: Request):
+async def log_out(response: Response):
     """
     ## Logout Route For Lif Accounts
     Handles the logout process for Lif Accounts.
@@ -235,21 +235,10 @@ async def log_out(request: Request):
     ### Returns:
     - **STRING:** Status of the operation.
     """
-    # Create response for client
-    response = Response()
+    response.delete_cookie(key="LIF_USERNAME", path="/", domain=".lifplatforms.com")
+    response.delete_cookie(key="LIF_TOKEN", path="/", domain=".lifplatforms.com")
 
-    print(request.cookies.get("LIF_USERNAME"))
-    print(request.cookies.get("LIF_TOKEN"))
-
-    # Delete auth cookies
-    #response.delete_cookie("LIF_USERNAME", domain=".lifplatforms.com", path="/")
-    #response.delete_cookie("LIF_TOKEN", domain=".lifplatforms.com", path="/")
-
-    # Set max_age to immediately expire the cookies
-    response.set_cookie("LIF_USERNAME", value="", max_age=-1, domain=".lifplatforms.com", path="/")
-    response.set_cookie("LIF_TOKEN", value="", max_age=-1, domain=".lifplatforms.com", path="/")
-
-    return response
+    return "Logout Successful"
     
 @app.post("/update_pfp")
 @app.post("/account/update_avatar")
