@@ -4,9 +4,6 @@ import uuid
 import mysql.connector
 from mysql.connector.constants import ClientFlag
 
-# Global database connection
-conn = None
-
 # Load config.yml
 # Run by the main file after the config checks have been completed
 def load_config():
@@ -18,35 +15,25 @@ def load_config():
 
 # Function to establish a database connection
 def connect_to_database():
-    # Handle connecting to the database
-    def connect():
-        global conn
+    # Define configurations
+    mysql_configs = {
+        "host": configurations['mysql-host'],
+        "port": configurations['mysql-port'],
+        "user": configurations['mysql-user'],
+        "password": configurations['mysql-password'],
+        "database": configurations['mysql-database'], 
+    }
 
-        # Define configurations
-        mysql_configs = {
-            "host": configurations['mysql-host'],
-            "port": configurations['mysql-port'],
-            "user": configurations['mysql-user'],
-            "password": configurations['mysql-password'],
-            "database": configurations['mysql-database'], 
-        }
+    # Check if SSL is enabled
+    if configurations['mysql-ssl']:
+        # Add ssl configurations to connection
+        mysql_configs['client_flags'] = [ClientFlag.SSL]
+        mysql_configs['ssl_ca'] = configurations['mysql-cert-path']
 
-        # Check if SSL is enabled
-        if configurations['mysql-ssl']:
-            # Add ssl configurations to connection
-            mysql_configs['client_flags'] = [ClientFlag.SSL]
-            mysql_configs['ssl_ca'] = configurations['mysql-cert-path']
+    conn = mysql.connector.connect(**mysql_configs)
 
-        conn = mysql.connector.connect(**mysql_configs)
+    return conn
     
-    # Check if there is a MySQL connection
-    if conn is None:
-        connect()
-    else:
-        # Check if existing connection is still alive
-        if not conn.is_connected():
-            connect()
-
 # Class for auth related functions
 class auth:
     """
@@ -70,22 +57,19 @@ class auth:
             return "BAD_CREDENTIALS"
         
         else:
-            connect_to_database()
+            conn = connect_to_database()
             cursor = conn.cursor()
 
             # Validate login credentials
-            cursor.execute("SELECT * FROM accounts WHERE username = %s AND password = %s", (username, password,))
+            cursor.execute("SELECT username, password, role FROM accounts WHERE username = %s AND password = %s", (username, password,))
             account = cursor.fetchone()
+            conn.close()
 
             # Checks if the account was found
             if account:
-                # Check if user is suspended
-                cursor.execute("SELECT role FROM accounts WHERE username = %s", (username,))
-                role = cursor.fetchone()
-
-                if role[0] == "SUSPENDED":
-                    return "ACCOUNT_SUSPENDED"
-                
+                # Check if account is suspended
+                if account[2] == "SUSPENDED":
+                    return "ACCOUNT_SUSPENDED"   
                 else:
                     return "OK"
             else:
@@ -103,17 +87,18 @@ class auth:
         ### Returns
         STRING: Literal 'Ok', 'INVALID_TOKEN', 'SUSPENDED'.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Get account from database
-        cursor.execute("SELECT * FROM accounts WHERE username = %s", (username,))
+        cursor.execute("SELECT username, token, role FROM accounts WHERE username = %s AND token = %s", (username, token,))
         account = cursor.fetchone()
+        conn.close()
 
         # Check token
-        if account[4] == token:
+        if account:
             # Check role
-            if account[9] != "SUSPENDED":
+            if account[2] != "SUSPENDED":
                 return "Ok"
             else:
                 return "SUSPENDED"
@@ -132,23 +117,19 @@ class auth:
         ### Returns
         BOOLEAN: True (Username Found), False (Username NOT Found).
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Gets all accounts from the MySQL database
         cursor.execute("SELECT * FROM accounts WHERE username = %s", (username,))
         item = cursor.fetchone()
+        conn.close()
 
-        found_username = False
-
-        # Set 'found_username' to 'True' if username was found
+        # Check if username was found
         if item:
-            found_username = True
-
-        cursor.close()
-
-        # Returns the status
-        return found_username
+            return True
+        else:
+            return False
     
     def check_email(email):
         """
@@ -161,23 +142,19 @@ class auth:
         ### Returns
         BOOLEAN: True (Email Found), False, (Email NOT Found).
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
-
-        found_email = False
 
         # Get email from MySQL database
         cursor.execute("SELECT * FROM accounts WHERE email = %s", (email,))
         item = cursor.fetchone()
+        conn.close()
 
-        # Set 'found_email' to 'True' if email was found
+        # Check if email was found
         if item:
-            found_email = True
-
-        cursor.close()
-
-        # Returns the status
-        return found_email
+            return True
+        else:
+            return False
     
     def create_account(username, email, password, password_salt):
         """
@@ -193,9 +170,7 @@ class auth:
         ### Returns
         None
         """
-        connect_to_database()
-
-        # Define database cursor
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Generate user token
@@ -208,7 +183,7 @@ class auth:
                     (username, password, email, token, password_salt, None, None, user_id))
 
         conn.commit()
-        cursor.close()
+        conn.close()
 
     def check_user_exists(account: str, mode: str):
         """
@@ -222,15 +197,14 @@ class auth:
         ### Returns
         BOOLEAN: True (User Found), False (User NOT Found)'.
         """
-        connect_to_database()
-
-        # Define database cursor
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Check mode
         if mode == "ACCOUNT_ID":
             cursor.execute("SELECT * FROM accounts WHERE user_id = %s", (account,))
             account = cursor.fetchone()
+            conn.close()
 
             # Check if user exists
             if account:
@@ -241,6 +215,7 @@ class auth:
         elif mode == "USERNAME":
             cursor.execute("SELECT * FROM accounts WHERE username = %s", (id,))
             account = cursor.fetchone()
+            conn.close()
 
             # Check if user exists
             if account:
@@ -260,14 +235,13 @@ class auth:
         ### Returns
         BOOLEAN: True (User HAS Permission), False (User DOESN'T Have Permission).
         """
-        connect_to_database()
-
-        # Define database cursor
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Get permissions
         cursor.execute("SELECT * FROM permissions WHERE account_id = %s AND node = %s", (account_id, node,))
         perms = cursor.fetchall()
+        conn.close()
 
         # Check if user had required perm
         if perms:
@@ -294,12 +268,13 @@ class info:
         ### Returns
         STRING: Password salt OR BOOLEAN: False (User Not Found).
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Gets the salt for the given username from the MySQL database
         cursor.execute("SELECT salt FROM accounts WHERE username = %s", (username,))
         result = cursor.fetchone()
+        conn.close()
 
         if result is not None:
             return result[0]  # Return the salt value if found
@@ -317,27 +292,18 @@ class info:
         ### Returns
         STRING: User token OR BOOLEAN: False (User Not Found).
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
-        # Gets all accounts from the MySQL database
-        cursor.execute("SELECT * FROM accounts")
-        items = cursor.fetchall()
+        # Get token from database
+        cursor.execute("SELECT token FROM accounts WHERE username = %s", (username,))
+        token = cursor.fetchone()
 
-        found_token = False
-
-        # Gets the token from the MySQL database
-        for item in items:
-            database_username = item[1]
-            database_token = item[4]
-
-            if username == database_username:
-                found_token = database_token
-
-        cursor.close()
-
-        # Returns the token
-        return found_token
+        # Check if token was found
+        if token:
+            return token[0]
+        else:
+            return False
     
     def get_bio(username):
         """
@@ -350,14 +316,15 @@ class info:
         ### Returns
         STRING: User bio, Literal 'INVALID_USER'.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM accounts WHERE username = %s", (username,))
+        cursor.execute("SELECT bio FROM accounts WHERE username = %s", (username,))
         data = cursor.fetchone()
+        conn.close()
 
         if data:
-            return data[6]
+            return data[0]
         else:
             return "INVALID_USER"
     
@@ -372,13 +339,14 @@ class info:
         ### Returns
         STRING: User pronouns.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM accounts WHERE username = %s", (username,))
+        cursor.execute("SELECT pronouns FROM accounts WHERE username = %s", (username,))
         data = cursor.fetchone()
+        conn.close()
 
-        return data[7]
+        return data[0]
     
     def get_user_email(username: str):
         """
@@ -391,13 +359,14 @@ class info:
         ### Returns
         STRING: User email.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM accounts WHERE username = %s", (username,))
+        cursor.execute("SELECT email FROM accounts WHERE username = %s", (username,))
         data = cursor.fetchone()
+        conn.close()
 
-        return data[3]
+        return data[0]
     
     def get_bulk_emails(accounts: list, search_mode: str):
         """
@@ -411,7 +380,7 @@ class info:
         ### Returns
         LIST: List of account emails.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Check search mode
@@ -431,8 +400,7 @@ class info:
 
         # Fetch the results
         found_accounts = cursor.fetchall()
-
-        cursor.close()
+        conn.close()
 
         return found_accounts
 
@@ -447,13 +415,14 @@ class info:
         ### Returns
         STRING: Username.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM accounts WHERE user_id = %s", (account_id,))
+        cursor.execute("SELECT username FROM accounts WHERE user_id = %s", (account_id,))
         data = cursor.fetchone()
+        conn.close()
 
-        return data[1]
+        return data[0]
     
     def get_user_id(username: str):
         """
@@ -466,11 +435,12 @@ class info:
         ### Returns
         STRING: User Id.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         cursor.execute("SELECT user_id FROM accounts WHERE username = %s", (username,))
         data = cursor.fetchone()
+        conn.close()
 
         return data[0]
 
@@ -493,12 +463,13 @@ class update:
         ### Returns
         STRING: Literal 'Ok'.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Grab user info from database
         cursor.execute("UPDATE accounts SET bio = %s WHERE username = %s", (data, username))
         conn.commit()
+        conn.close()
 
         return "Ok"
 
@@ -513,12 +484,13 @@ class update:
         ### Returns
         STRING: Literal 'Ok'.
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Update pronouns in database
         cursor.execute("UPDATE accounts SET pronouns = %s WHERE username = %s", (data, username))
         conn.commit()
+        conn.close()
 
         return "Ok"
 
@@ -534,12 +506,13 @@ class update:
         ### Returns
         None
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Update salt in database
         cursor.execute("UPDATE accounts SET salt = %s WHERE username = %s", (salt, username))
         conn.commit()
+        conn.close()
 
     def update_password(username: str, password: str):
         """
@@ -553,12 +526,13 @@ class update:
         ### Returns
         None
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Update password in database
         cursor.execute("UPDATE accounts SET password = %s WHERE username = %s", (password, username))
         conn.commit()
+        conn.close()
 
     def set_role(account_id, role):
         """
@@ -572,12 +546,13 @@ class update:
         ### Returns
         None
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Set role of user
         cursor.execute("UPDATE accounts SET role = %s WHERE user_id = %s", (role, account_id,))
         conn.commit()
+        conn.close()
 
     def update_email(account_id: str, email: str):
         """
@@ -591,12 +566,13 @@ class update:
         ### Returns
         None
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Update user email
         cursor.execute("UPDATE accounts SET email = %s WHERE user_id = %s", (email, account_id,))
         conn.commit()
+        conn.close()
 
     def add_permission_node(account_id: str, node: str):
         """
@@ -610,12 +586,13 @@ class update:
         ### Returns
         None
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Add user permissions
         cursor.execute("INSERT INTO permissions (account_id, node) VALUES (%s, %s)", (account_id, node,))
         conn.commit()
+        conn.close()
 
     def remove_permission_node(account_id: str, node: str):
         """
@@ -629,12 +606,13 @@ class update:
         ### Returns
         None
         """
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Remove user permissions
         cursor.execute("DELETE FROM permissions WHERE account_id = %s AND node = %s", (account_id, node,))
         conn.commit()
+        conn.close()
 
 def get_username_from_email(email):
     """
@@ -647,11 +625,12 @@ def get_username_from_email(email):
     ### Returns
     STRING: Email of the account.
     """
-    connect_to_database()
+    conn = connect_to_database()
     cursor = conn.cursor()
 
     # Get username from email
     cursor.execute("SELECT username FROM accounts WHERE email = %s", (email,))
     data = cursor.fetchone()
+    conn.close()
 
     return data[0]
