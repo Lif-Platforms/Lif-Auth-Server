@@ -113,6 +113,7 @@ app.add_middleware(
     allow_origins=configurations['allow-origins'],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 @app.api_route("/", methods=["GET", "HEAD"])
@@ -158,7 +159,7 @@ async def login(username: str, password: str):
 
 @app.post('/lif_login')
 @app.post('/auth/login')
-async def lif_login(username: str = Form(), password: str = Form(), permissions: str = None):
+async def lif_login(request: Request, response: Response, username: str = Form(), password: str = Form(), permissions: str = None):
     """
     ## Login Route For Lif Accounts (NEW)
     Handles the authentication process for Lif Accounts.
@@ -173,9 +174,6 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
     ### Returns:
     - **JSON:** Token for user account.
     """
-    # Get route version
-    version = request.headers.get("version")
-
     # Gets password hash
     password_hash = hasher.get_hash_with_database_salt(username=username, password=password)
 
@@ -185,6 +183,21 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
 
     # Verifies credentials with database
     status = database.auth.verify_credentials(username=username, password=password_hash)
+
+    # Check if the client has set the 'set-auth-cookies' header to 'True' and sets auth cookies
+    def set_cookies():
+        # Get cookie header
+        # Used to tell auth server if it should set the login cookies
+        set_auth_cookies = request.headers.get("set-auth-cookies")
+
+        print(set_auth_cookies)
+        print(type(set_auth_cookies))
+        print(bool(set_auth_cookies))
+
+        if set_auth_cookies != None and bool(set_auth_cookies) == True:
+            response.set_cookie(key="LIF_USERNAME", value=username, domain=".lifplatforms.com", path="/")
+            response.set_cookie(key="LIF_TOKEN", value=token, domain=".lifplatforms.com", path="/")
+            print("set auth cookies")
     
     if status == "OK":
         # Gets token from database
@@ -212,11 +225,14 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
 
             # Check is all checks were successful
             if checks == len(perms):
+                set_cookies()
+
                 return {'token': token}
             
             else:
                 raise HTTPException(status_code=403, detail="No Permission")
         else:
+            set_cookies()
             return {'token': token}
     
     elif status == "ACCOUNT_SUSPENDED":

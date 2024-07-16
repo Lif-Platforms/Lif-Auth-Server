@@ -1,0 +1,52 @@
+<!--THIS IS A TESTING DOCUMENT. SHOULD BE REMOVED BEFORE MERGING!-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Cookies Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+</head>
+<body>
+   <h1>Auth Cookies Test</h1>
+   <p id="username">...</p> 
+   <p id="token">...</p> 
+   <h3>Login</h3>
+   <form id="login-form">
+        <input name="username" type="text">
+        <input name="password" type="password">
+        <button onclick="login()" type="button">Login</button>
+   </form>
+   <p id="login-status" style="color: red;"></p>
+</body>
+<script>
+    // Get cookies values
+    const username = Cookies.get('LIF_USERNAME');
+    const token = Cookies.get('LIF_TOKEN');
+
+    // Set cookie values on html
+    document.getElementById('username').innerHTML = username;
+    document.getElementById('token').innerHTML = token;
+
+    function login() {
+        fetch('http://localtesting.lifplatforms.com:8002/auth/login', {
+            method: 'POST',
+            body: new FormData(document.getElementById("login-form")),
+            headers: {
+                'set-auth-cookies': true
+            }
+        })
+        .then((response) => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error("Request failed with status code: " + response.status);
+            }
+        })
+        .catch((err) => {
+            console.error(err);
+            document.getElementById('login-status').innerHTML = err;
+        })
+    }
+</script>
+</html>
