@@ -445,7 +445,7 @@ class info:
         return data[0]
     
     def check_if_user_exists(user: str):
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM accounts WHERE username = %s", (user,))
@@ -457,7 +457,7 @@ class info:
             return False
         
     def get_role(username: str):
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         cursor.execute("SELECT role FROM accounts WHERE username = %s", (username,))
@@ -466,7 +466,7 @@ class info:
         return role[0]
     
     def get_account_id(username: str):
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         cursor.execute("SELECT user_id FROM accounts WHERE username = %s", (username,))
@@ -646,7 +646,7 @@ class update:
 
 class reports:
     def submit_report(user: str, service: str, reason: str, content: str):
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Add report to database
@@ -654,7 +654,7 @@ class reports:
         conn.commit()
 
     def get_reports(filter: str, limit: int = 100):
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         # Check filter and execute correct SQL query
@@ -670,7 +670,7 @@ class reports:
         return reports
     
     def get_report(report_id: int):
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM reports WHERE id = %s", (report_id,))
@@ -679,7 +679,7 @@ class reports:
         return report
     
     def resolve_report(report_id: int):
-        connect_to_database()
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         cursor.execute("UPDATE reports SET resolved = %s WHERE id = %s", (True, report_id))
