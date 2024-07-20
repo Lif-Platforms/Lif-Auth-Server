@@ -186,14 +186,14 @@ async def lif_login(request: Request, response: Response, username: str = Form()
     status = database.auth.verify_credentials(username=username, password=password_hash)
 
     # Check if the client has set the 'set-auth-cookies' header to 'True' and sets auth cookies
-    def set_cookies():
+    async def set_cookies():
         # Get cookie header
         # Used to tell auth server if it should set the login cookies
         set_auth_cookies = request.headers.get("set-auth-cookies")
 
-        print(set_auth_cookies)
-        print(type(set_auth_cookies))
-        print(bool(set_auth_cookies))
+        print(f"set-auth-cookies header: {set_auth_cookies}")
+        print(f"Type: {type(set_auth_cookies)}")
+        print(f"Boolean value: {bool(set_auth_cookies)}")
 
         if set_auth_cookies != None and bool(set_auth_cookies) == True:
             response.set_cookie(key="LIF_USERNAME", value=username, domain=".lifplatforms.com", path="/")
@@ -230,14 +230,14 @@ async def lif_login(request: Request, response: Response, username: str = Form()
 
             # Check is all checks were successful
             if checks == len(perms):
-                set_cookies()
+                await set_cookies()
 
                 return {'token': token}
             
             else:
                 raise HTTPException(status_code=403, detail="No Permission")
         else:
-            set_cookies()
+            await set_cookies()
             return {'token': token}
     
     elif status == "ACCOUNT_SUSPENDED":
