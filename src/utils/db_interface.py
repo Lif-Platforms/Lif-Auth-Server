@@ -653,55 +653,14 @@ class reports:
         cursor.execute("INSERT INTO reports (user, service, reason, content, resolved) VALUES (%s, %s, %s, %s, %s)", (user, service, reason, content, False,))
         conn.commit()
 
-    def get_reports(filter: str, limit: int = 100):
+    def get_reports(search_filter: str, limit: int = 100):
         conn = connect_to_database()
         cursor = conn.cursor()
 
         # Check filter and execute correct SQL query
-        if filter == "unresolved":
+        if search_filter == "unresolved":
             cursor.execute("SELECT * FROM reports WHERE resolved = %s LIMIT %s", (False, limit))
-        elif filter == "resolved":
-            cursor.execute("SELECT * FROM reports WHERE resolved = %s LIMIT %s", (True, limit))
-        else:
-            cursor.execute("SELECT * FROM reports LIMIT %s", (limit,))
-
-        reports = cursor.fetchall()
-
-        return reports
-    
-    def get_report(report_id: int):
-        conn = connect_to_database()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT * FROM reports WHERE id = %s", (report_id,))
-        report = cursor.fetchone()
-
-        return report
-    
-    def resolve_report(report_id: int):
-        conn = connect_to_database()
-        cursor = conn.cursor()
-
-        cursor.execute("UPDATE reports SET resolved = %s WHERE id = %s", (True, report_id))
-        conn.commit()
-
-class reports:
-    def submit_report(user: str, service: str, reason: str, content: str):
-        conn = connect_to_database()
-        cursor = conn.cursor()
-
-        # Add report to database
-        cursor.execute("INSERT INTO reports (user, service, reason, content, resolved) VALUES (%s, %s, %s, %s, %s)", (user, service, reason, content, False,))
-        conn.commit()
-
-    def get_reports(filter: str, limit: int = 100):
-        conn = connect_to_database()
-        cursor = conn.cursor()
-
-        # Check filter and execute correct SQL query
-        if filter == "unresolved":
-            cursor.execute("SELECT * FROM reports WHERE resolved = %s LIMIT %s", (False, limit))
-        elif filter == "resolved":
+        elif search_filter == "resolved":
             cursor.execute("SELECT * FROM reports WHERE resolved = %s LIMIT %s", (True, limit))
         else:
             cursor.execute("SELECT * FROM reports LIMIT %s", (limit,))

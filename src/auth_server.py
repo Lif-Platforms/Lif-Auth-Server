@@ -1007,7 +1007,7 @@ def report_user(user: str = Form(), service: str = Form(), reason: str = Form(),
         raise HTTPException(status_code=404, detail="User not found")
     
 @app.get("/moderation/reports/get_reports")
-def get_reports(request: Request, filter: str = None):
+def get_reports(request: Request, search_filter: str = None):
     """
     ## Get Reports
     Gets users reports.
@@ -1032,7 +1032,7 @@ def get_reports(request: Request, filter: str = None):
         # Check if user has moderator role
         if database.info.get_role(username) == "MODERATOR":
             # Get reports from database
-            reports = database.reports.get_reports(filter)
+            reports = database.reports.get_reports(search_filter)
 
             # Format reports for client
             format_reports = []
