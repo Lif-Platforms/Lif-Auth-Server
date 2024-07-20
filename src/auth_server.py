@@ -976,6 +976,197 @@ def get_account_id(username: str):
     """
     return database.info.get_user_id(username)
 
+@app.post("/account/report")
+def report_user(user: str = Form(), service: str = Form(), reason: str = Form(), content: str = Form()):
+    """
+    ## Report User
+    Allows the reporting of user accounts.
+    
+    ### Parameters:
+    - **username (str):** The username for the account responsible.
+    - **service (str):** The service the incident accrued on. Accepts: Ringer, Dayly, Support.
+    - **reason (str):** The reason for reporting this user.
+    - **content (str):** The content being reported.
+
+    ### Returns:
+    - **STRING:** Status of the operation.
+    """
+    accepted_services = ["Ringer", "Dayly", "Support"]
+
+    # Check if user is valid
+    if database.info.check_if_user_exists(user):
+        # Check if service field is valid
+        if service in accepted_services:
+            # Add report to database
+            database.reports.submit_report(user, service, reason, content)
+
+            return "Ok"
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid service. Accepted services: {str(accepted_services)}")
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+@app.get("/moderation/reports/get_reports")
+def get_reports(request: Request, search_filter: str = None):
+    """
+    ## Get Reports
+    Gets users reports.
+    
+    ### Parameters:
+    - None
+
+    ### Query Parameters:
+    - **filter (str):** 'unresolved': All unresolved reports. 'resolved': All resolved reports.
+
+    ### Returns:
+    - **STRING:** Status of the operation.
+    """
+    # Get auth information
+    username = request.headers.get("username")
+    token = request.headers.get("token")
+
+    # Verify user credentials
+    token_status = database.auth.check_token(username, token)
+
+    if token_status == "Ok":
+        # Check if user has moderator role
+        if database.info.get_role(username) == "MODERATOR":
+            # Get reports from database
+            reports = database.reports.get_reports(search_filter)
+
+            # Format reports for client
+            format_reports = []
+
+            for report in reports:
+                format_reports.append({
+                    "id": report[0], 
+                    "user": report[1], 
+                    "service": report[2], 
+                    "reason": report[3], 
+                    "content": report[4], 
+                    "resolved": bool(report[5])
+                })
+
+            return format_reports
+        else:
+            raise HTTPException(status_code=403, detail="No permission!")
+        
+    elif token_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account Suspended")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid Token")
+    
+@app.get("/moderation/reports/get_report/{report_id}")
+def get_report(request: Request, report_id: int):
+    """
+    ## Get Reports
+    Gets users reports.
+    
+    ### Parameters:
+    - **report_id (int): The id of the report to fetch.
+
+    ### Returns:
+    - **JSON:** Data for requested report.
+    """
+    # Get auth information
+    username = request.headers.get("username")
+    token = request.headers.get("token")
+
+    # Verify user credentials
+    token_status = database.auth.check_token(username, token)
+
+    if token_status == "Ok":
+        # Check if user has moderator role
+        if database.info.get_role(username) == "MODERATOR":
+            # Get report from database
+            report = database.reports.get_report(report_id)
+
+            # Check if report was found
+            if report:
+                return {"id": report[0], "user": report[1], "service": report[2], "reason": report[3], "content": report[4], "resolved": report[5]}
+            else:
+                raise HTTPException(status_code=404, detail="Report Not Found")
+        else:
+            raise HTTPException(status_code=403, detail="Permission denied")
+        
+    elif token_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account Suspended")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid Token")
+    
+@app.post("/moderation/suspend_account")
+def suspend_account_v2(request: Request, user: str = Form()):
+    """
+    ## Suspend Account
+    Suspends user accounts.
+    
+    ### Parameters:
+    - **user (str): The user being suspended.
+
+    ### Returns:
+    - **STRING:** Status of operation.
+    """
+    username = request.headers.get("username")
+    token = request.headers.get("token")
+
+    # Verify user token
+    token_status = database.auth.check_token(username, token)
+
+    if token_status == "Ok":
+        # Check user role
+        if database.info.get_role(username) == "MODERATOR":
+            # Get account id of user
+            account_id = database.info.get_account_id(user)
+
+            # Check if user exists
+            if account_id:
+                # Suspend user
+                database.update.set_role(account_id, "SUSPENDED")
+
+                return "Ok"
+            else:
+                raise HTTPException(status_code=404, detail="User not found!")
+        else:
+            raise HTTPException(status_code=403, detail="No permission")
+        
+    elif token_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account suspended")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+@app.post("/moderation/reports/resolve")
+def resolve_report(request: Request, report_id: int = Form()):
+    """
+    ## Resolve Report
+    Resolves a user report.
+    
+    ### Parameters:
+    - **report_id (int): The id of the report.
+
+    ### Returns:
+    - **STRING:** Status of operation.
+    """
+    username = request.headers.get("username")
+    token = request.headers.get("token")
+
+    # Verify user token
+    token_status = database.auth.check_token(username, token)
+
+    if token_status == "Ok":
+        # Check user role
+        if database.info.get_role(username) == "MODERATOR":
+            # Resolve report
+            database.reports.resolve_report(report_id)
+
+            return "Ok"
+        else:
+            raise HTTPException(status_code=403, detail="No permission")
+        
+    elif token_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account suspended")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8002, log_config=log_config_file)
