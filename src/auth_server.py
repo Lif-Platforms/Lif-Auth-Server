@@ -1038,7 +1038,14 @@ def get_reports(request: Request, search_filter: str = None):
             format_reports = []
 
             for report in reports:
-                format_reports.append({"id": report[0], "user": report[1], "service": report[2], "reason": report[3], "content": report[4], "resolved": bool(report[5])})
+                format_reports.append({
+                    "id": report[0], 
+                    "user": report[1], 
+                    "service": report[2], 
+                    "reason": report[3], 
+                    "content": report[4], 
+                    "resolved": bool(report[5])
+                })
 
             return format_reports
         else:
