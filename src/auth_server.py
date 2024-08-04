@@ -770,7 +770,7 @@ def update_email(username: str = Form(), password: str = Form(), email: str = Fo
 
 @app.api_route('/auth/verify_token', methods=["POST", "GET"])
 @app.api_route('/verify_lif_token', methods=["POST", "GET"])
-async def verify_lif_token(request: Request, username: str = Form(None), token: str = Form(None), permissions: str = None):
+async def verify_lif_token(request: Request, username: str = Form(None), token: str = Form(None), permissions: str = None, role: str = None):
     """
     ## Verify Lif Token (NEW)
     Handles the verification of Lif user tokens. 
@@ -784,7 +784,8 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
     - **LIF_TOKEN:** The token for the account.
 
     ### Query Parameters:
-    - **permissions:** List of required permission nodes for successful authentication
+    - **permissions (str):** List of required permission nodes for successful authentication.
+    - **role (str):** A role required for successful verification.
 
     ### Returns:
     - **JSON:** Status of the operation.
@@ -826,6 +827,15 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
         check_token_status = database.auth.check_token(username, token)
         
         if check_token_status == "Ok":
+            # Check if a role was specified
+            if role:
+                # Get user role
+                user_role = database.info.get_role(username)
+
+                # Check if user has specified role
+                if user_role != role:
+                    raise HTTPException(status_code=403, detail="No Permission")
+
             # Check required permissions
             status = check_perms(username)
 
@@ -833,7 +843,7 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
                 return JSONResponse(status_code=200, content='Token is valid!')
             else:
                 raise HTTPException(status_code=403, detail="No Permission")
-            
+                
         elif check_token_status == "SUSPENDED":
             raise HTTPException(status_code=403, detail="Account Suspended!")
         
@@ -846,10 +856,18 @@ async def verify_lif_token(request: Request, username: str = Form(None), token: 
         token_cookie = request.cookies.get("LIF_TOKEN")
 
         # Check given token against database token
-        check_token_status = database.auth.check_token(username, token)
-
+        check_token_status = database.auth.check_token(username_cookie, token_cookie)
         
         if check_token_status == "Ok":
+            # Check if a role was specified
+            if role:
+                # Get user role
+                user_role = database.info.get_role(username_cookie)
+
+                # Check if user has specified role
+                if user_role != role:
+                    raise HTTPException(status_code=403, detail="No Permission")
+
             # Check permissions 
             status = check_perms(username_cookie)
 
