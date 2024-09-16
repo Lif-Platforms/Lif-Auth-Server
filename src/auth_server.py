@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, RedirectResponse
 from starlette.responses import Response
+import tldextract
 import os
 import yaml
 import json
@@ -224,7 +225,7 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
         raise HTTPException(status_code=401, detail='Incorrect Login Credentials')
     
 @app.get("/auth/logout")
-async def log_out(response: Response):
+async def log_out(response: Response, redirect = None):
     """
     ## Logout Route For Lif Accounts
     Handles the logout process for Lif Accounts.
@@ -232,13 +233,34 @@ async def log_out(response: Response):
     ### Parameters:
     none
 
+    ### Query Parameters
+    - **redirect:** url to redirect to after the logout completes.
+
     ### Returns:
     - **STRING:** Status of the operation.
     """
     response.delete_cookie(key="LIF_USERNAME", path="/", domain=".lifplatforms.com")
     response.delete_cookie(key="LIF_TOKEN", path="/", domain=".lifplatforms.com")
 
-    return "Logout Successful"
+    # Create a RedirectResponse
+    redirect_response = RedirectResponse(url=redirect)
+
+    # Copy the cookies from the response to the redirect response
+    for cookie in response.headers.getlist("set-cookie"):
+        redirect_response.headers.append("set-cookie", cookie)
+
+    if redirect != None:
+        # Check to ensure redirect URL goes to a Lif Platforms domain
+        extracted = tldextract.extract(redirect)
+        domain = f"{extracted.domain}.{extracted.suffix}"
+
+        if domain == "lifplatforms.com":
+            return redirect_response
+        else:
+            print(domain)
+            raise HTTPException(status_code=400, detail="Untrusted redirect url.")
+    else:
+        return "Log Out Successful"
     
 @app.post("/update_pfp")
 @app.post("/account/update_avatar")
