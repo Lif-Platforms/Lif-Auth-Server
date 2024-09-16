@@ -486,10 +486,15 @@ async def get_pfp(username: str):
 
     # Check if the file exists and is a regular file
     if os.path.isfile(avatar_path):
-        return FileResponse(avatar_path, media_type='image/gif')
+        response = FileResponse(avatar_path, media_type='image/gif')
     else:
         # Return default image if the user's banner doesn't exist
-        return FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
+        response = FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
+
+    # Add caching limit to image
+    response.headers["Cache-Control"] = "public, max-age=3600"
+
+    return response
 
 @app.get("/get_banner/{username}")
 @app.get("/profile/get_banner/{username}")
@@ -512,10 +517,15 @@ async def get_banner(username: str):
 
     # Check if the file exists and is a regular file
     if os.path.isfile(banner_path):
-        return FileResponse(banner_path, media_type='image/gif')
+        response = FileResponse(banner_path, media_type='image/gif')
     else:
         # Return default image if the user's banner doesn't exist
-        return FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
+        response = FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
+
+    # Add caching time limit to image
+    response.headers["Cache-Control"] = "public, max-age=3600"
+
+    return response
     
 @app.post("/create_lif_account")
 @app.post("/account/create_account")
