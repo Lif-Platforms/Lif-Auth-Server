@@ -195,7 +195,7 @@ async def lif_login(request: Request, response: Response, username: str = Form()
         print(f"Type: {type(set_auth_cookies)}")
         print(f"Boolean value: {bool(set_auth_cookies)}")
 
-        if set_auth_cookies != None and bool(set_auth_cookies) == True:
+        if set_auth_cookies:
             response.set_cookie(key="LIF_USERNAME", value=username, domain=".lifplatforms.com", path="/")
             response.set_cookie(key="LIF_TOKEN", value=token, domain=".lifplatforms.com", path="/")
             print("set auth cookies")
