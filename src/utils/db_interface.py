@@ -248,7 +248,25 @@ class auth:
             return True
         else:
             return False
+        
+    def save_two_factor_secret(username: str, secret: str):
+        """
+        ## Save Two Factor Secret
+        Save a two-factor secret to a user account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        - secret (str): The secret being saved.
+        
+        ### Returns
+        None
+        """
+        conn = connect_to_database()
+        cursor = conn.cursor()
 
+        cursor.execute("UPDATE accounts SET 2fa_secret = %s WHERE username = %s", (secret, username))
+        conn.commit()
+        conn.close()
             
 # Class for info get related functions
 class info:
@@ -473,6 +491,29 @@ class info:
         role = cursor.fetchone()
 
         return role[0]
+    
+    def get_two_factor_secret(username: str):
+        """
+        ## Get Two Factor Secret
+        Get the two factor secret for a Lif Account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+       
+        ### Returns
+        STRING: 2fa secret.
+        """
+        conn = connect_to_database()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT 2fa_secret FROM accounts WHERE username = %s", (username,))
+        secret = cursor.fetchone()
+        conn.close()
+
+        if secret:
+            return secret[0]
+        else:
+            return None
 
 # Class for update related functions
 class update:

@@ -7,6 +7,8 @@ import os
 import yaml
 import json
 import re
+import pyotp
+import qrcode
 import io
 from PIL import Image, ImageDraw
 import sentry_sdk
@@ -271,25 +273,106 @@ async def log_out(response: Response, redirect = None):
             raise HTTPException(status_code=400, detail="Untrusted redirect url.")
     else:
         return "Log Out Successful"
+    
+@app.post("/auth/2fa/setup")
+async def two_factor_auth_setup(username: str = Form(), password: str = Form()):
+    """
+    ## Setup 2FA
+    Allows users to setup 2-factor authentication for their Lif Accounts.
+    
+    ### Parameters:
+    - **username (str):** The username for the account.
+    - **password (str):** The password for the account.
 
-@app.get("/account/reset_token")
-async def reset_token(request: Request):
-    # Get auth details
-    username = request.headers.get("username")
-    token  = request.headers.get("token")
+    ### Returns:
+    - **IMAGE:** QR code for authenticator app setup.
+    """
+    # Hash user password before verification
+    hashed_password = hasher.get_hash_with_database_salt(username, password)
 
-    # Verify token in database
-    auth_status = database.auth.check_token(username, token)
+    # Verify user credentials
+    if database.auth.verify_credentials(username, hashed_password) == "OK":
+        secret = database.info.get_two_factor_secret(username)
 
-    if  auth_status == "Ok":
-        # Reset token in database
-        database.update.reset_token(username)
+        if secret == None:
+            # Generate secret key
+            secret = pyotp.random_base32()
 
-        return "Token Reset"
-    elif auth_status == "SUSPENDED":
-        raise HTTPException(status_code=403, detail="Account suspended")
+            # Save secret to database
+            database.auth.save_two_factor_secret(username, secret)
+
+            # Create TOTP object
+            totp = pyotp.TOTP(secret)
+
+            # Get user email
+            email = database.info.get_user_email(username)
+
+            # Generate the TOTP URI
+            totp = pyotp.TOTP(secret)
+            uri = totp.provisioning_uri(name=email, issuer_name="Lif Platforms")
+
+            # Generate the QR code
+            qr = qrcode.make(uri)
+            img_byte_arr = io.BytesIO()
+            qr.save(img_byte_arr, format='PNG')
+            img_byte_arr.seek(0)
+
+            return Response(content=img_byte_arr.getvalue(), media_type="image/png")
+        else:
+            raise HTTPException(status_code=409, detail="User already has 2fa set up.")
     else:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Incorrect username and password.")
+    
+@app.get('/auth/2fa/setup_qr_code')
+async def two_factor_auth_status(request: Request):
+    """
+    ## Setup 2fa QR Code
+    Returns the setup QR code for 2fa setup.
+    
+    ### Headers:
+    - **username (str):** The username for the account.
+    - **password (str):** The password for the account.
+
+    ### Parameters:
+    None
+
+    ### Returns:
+    - **IMAGE:** QR code for authenticator app setup.
+    """
+    # Get auth credentials
+    username = request.headers.get('username')
+    password = request.headers.get('password')
+
+    # Hash password for verification
+    password_hash = hasher.get_hash_with_database_salt(username, password)
+
+    # Verify credentials
+    if database.auth.verify_credentials(username, password_hash) == "OK":
+        # Get 2fa secret from database
+        secret = database.info.get_two_factor_secret(username)
+
+        if secret != None:
+            # Create TOTP object
+            totp = pyotp.TOTP(secret)
+
+            # Get user email
+            email = database.info.get_user_email(username)
+
+            # Generate the TOTP URI
+            totp = pyotp.TOTP(secret)
+            uri = totp.provisioning_uri(name=email, issuer_name="Lif Platforms")
+
+            # Generate the QR code
+            qr = qrcode.make(uri)
+            img_byte_arr = io.BytesIO()
+            qr.save(img_byte_arr, format='PNG')
+            img_byte_arr.seek(0)
+
+            return Response(content=img_byte_arr.getvalue(), media_type="image/png")
+        else:
+            raise HTTPException(status_code=403, detail="User has not setup 2fa.")
+    else:
+        raise HTTPException(status_code=401, detail="Incorrect username and password.")
     
 @app.post("/update_pfp")
 @app.post("/account/update_avatar")

@@ -9,5 +9,7 @@ mysql-connector-python==8.0.33
 python-multipart==0.0.7
 requests==2.32.0
 tldextract==5.1.2
+pyotp==2.9.0
+qrcode== 7.4.2
 pillow==11.1.0
 sentry-sdk[fastapi]==2.20.0
