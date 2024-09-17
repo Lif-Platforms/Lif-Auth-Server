@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, RedirectResponse
 from starlette.responses import Response
 import tldextract
+from datetime import timedelta, datetime, timezone
 import os
 import yaml
 import json
@@ -105,7 +106,7 @@ app = FastAPI(
      description="Official API for Lif Platforms authentication services.",
      version=__version__,
      docs_url=enable_dev_docs,
-     redoc_url=None
+     redoc_url=None,
 )
 
 # Enable CORS
@@ -189,24 +190,35 @@ async def lif_login(request: Request, response: Response, username: str = Form()
     async def set_cookies():
         # Get cookie header
         # Used to tell auth server if it should set the login cookies
-        set_auth_cookies = request.headers.get("set-auth-cookies")
+        set_auth_cookies = bool(request.headers.get("set-auth-cookies"))
 
         print(f"set-auth-cookies header: {set_auth_cookies}")
         print(f"Type: {type(set_auth_cookies)}")
         print(f"Boolean value: {bool(set_auth_cookies)}")
 
         if set_auth_cookies:
-            response.set_cookie(key="LIF_USERNAME", value=username, domain=".lifplatforms.com", path="/")
-            response.set_cookie(key="LIF_TOKEN", value=token, domain=".lifplatforms.com", path="/")
+            # Set expiration date for cookies
+            expire_date = datetime.now(timezone.utc) + timedelta(days=30)
+
+            response.set_cookie(
+                key="LIF_USERNAME",
+                value=username,
+                samesite="none",
+                path="/",
+                expires=expire_date
+            )
+            response.set_cookie(
+                key="LIF_TOKEN",
+                value=token,
+                samesite="none",
+                path="/",
+                expires=expire_date
+            )
             print("set auth cookies")
     
     if status == "OK":
         # Gets token from database
         token = database.info.retrieve_user_token(username=username)
-        
-        # Set auth cookies
-        response.set_cookie(key="LIF_USERNAME", value=username, domain=".lifplatforms.com")
-        response.set_cookie(key="LIF_TOKEN", value=token, domain=".lifplatforms.com")
 
         # Check if required permissions were given
         if permissions is not None:
