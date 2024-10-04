@@ -685,6 +685,9 @@ async def account_recovery(websocket: WebSocket):
     user_email = None
     user_code = None
 
+    # Determines if the user has entered the correct code from the recovery email
+    authenticated = False
+
     # Wait for client to send data
     while True:
         # Tries to receive data from client, if fails then the connection is closed
@@ -709,25 +712,31 @@ async def account_recovery(websocket: WebSocket):
             elif 'code' in data:
                 # Compare generated code with user provided code
                 if data['code'] == user_code:
+                    # Sets the user to authenticated so the password can be updated
+                    authenticated = True
+
                     await websocket.send_json({"responseType": "codeCorrect", "message": "Code validated successfully."})
                 else:
                     await websocket.send_json({"responseType": "error", "message": "Bad Code"})
                     
             elif 'password' in data:
-                # Get password hash and gen salt
-                password_hash = hasher.get_hash_gen_salt(data['password'])
+                if authenticated:
+                    # Get password hash and gen salt
+                    password_hash = hasher.get_hash_gen_salt(data['password'])
 
-                # Get username from email
-                username = database.get_username_from_email(user_email)
+                    # Get username from email
+                    username = database.get_username_from_email(user_email)
 
-                # Update password and salt in database
-                database.update.update_password(username, password_hash['password'])
-                database.update.update_user_salt(username, password_hash['salt'])
+                    # Update password and salt in database
+                    database.update.update_password(username, password_hash['password'])
+                    database.update.update_user_salt(username, password_hash['salt'])
 
-                # Get user token
-                token = database.info.retrieve_user_token(username)
+                    # Get user token
+                    token = database.info.retrieve_user_token(username)
 
-                await websocket.send_json({"responseType": "passwordUpdated", "username": username, "token": token})
+                    await websocket.send_json({"responseType": "passwordUpdated", "username": username, "token": token})
+                else:
+                    await websocket.send_json({"responseType": "error", "message": "You have not authenticated yet"})
             else:
                 await websocket.send_json({"responseType": "error", "message": "Bad Request"})
 
