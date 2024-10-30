@@ -644,6 +644,28 @@ class update:
         conn.commit()
         conn.close()
 
+    def reset_token(username: str):
+        """
+        ## Reset Token
+        Resets the token on an account.
+        
+        ### Parameters
+        - username (str): Username of the account.
+        
+        ### Returns
+        None
+        """
+        conn = connect_to_database()
+        cursor = conn.cursor()
+
+        # Generate user token
+        token = str(secrets.token_hex(16 // 2))
+
+        # Update token in database
+        cursor.execute("UPDATE accounts SET token = %s WHERE username = %s", (token, username))
+        conn.commit()
+        conn.close()
+
 class reports:
     def submit_report(user: str, service: str, reason: str, content: str):
         conn = connect_to_database()

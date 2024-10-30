@@ -261,6 +261,25 @@ async def log_out(response: Response, redirect = None):
             raise HTTPException(status_code=400, detail="Untrusted redirect url.")
     else:
         return "Log Out Successful"
+
+@app.get("/account/reset_token")
+async def reset_token(request: Request):
+    # Get auth details
+    username = request.headers.get("username")
+    token  = request.headers.get("token")
+
+    # Verify token in database
+    auth_status = database.auth.check_token(username, token)
+
+    if  auth_status == "Ok":
+        # Reset token in database
+        database.update.reset_token(username)
+
+        return "Token Reset"
+    elif auth_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account suspended")
+    else:
+        raise HTTPException(status_code=401, detail="Invalid token")
     
 @app.post("/update_pfp")
 @app.post("/account/update_avatar")
