@@ -7,6 +7,8 @@ import os
 import yaml
 import json
 import re
+import io
+from PIL import Image, ImageDraw
 from _version import __version__
 from utils import db_interface as database
 from utils import password_hasher as hasher
@@ -484,16 +486,42 @@ async def verify_token(username: str, token: str):
     
     else:
         return {"Status": "Unsuccessful"}
+    
+def crop_to_circle(image: Image.Image) -> Image.Image:
+    """
+    Crop an image to a circle shape.
+    """
+    # Ensure the image is square
+    width, height = image.size
+    min_dimension = min(width, height)
+    left = (width - min_dimension) // 2
+    top = (height - min_dimension) // 2
+    right = (width + min_dimension) // 2
+    bottom = (height + min_dimension) // 2
+    image = image.crop((left, top, right, bottom))
+
+    # Create a mask for the circular crop
+    mask = Image.new('L', (min_dimension, min_dimension), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0, min_dimension, min_dimension), fill=255)
+
+    # Apply the mask to the image
+    result = Image.new('RGBA', (min_dimension, min_dimension))
+    result.paste(image, (0, 0), mask)
+    return result
 
 @app.get("/get_pfp/{username}")
 @app.get("/profile/get_avatar/{username}")
-async def get_pfp(username: str):
+async def get_pfp(username: str, crop: bool = False):
     """
     ## Get User Avatar (Profile Picture)
     Allows services to get the avatar (profile picture) of a specified account. 
     
     ### Parameters:
     - **username (str):** The username for the account.
+
+    ### Query Parameters
+    - **crop (boolean):** Whether or not the avatar should be cropped to a circle shape.
 
     ### Returns:
     - **file:** The avatar the service requested.
@@ -506,15 +534,22 @@ async def get_pfp(username: str):
 
     # Check if the file exists and is a regular file
     if os.path.isfile(avatar_path):
-        response = FileResponse(avatar_path, media_type='image/gif')
+        image = Image.open(avatar_path)
     else:
-        # Return default image if the user's banner doesn't exist
-        response = FileResponse(f'{assets_folder}/default_pfp.png', media_type='image/gif')
+        # Load default image if the user's banner doesn't exist
+        image = Image.open(f'{assets_folder}/default_pfp.png')
 
-    # Add caching limit to image
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    # Crop the image to a circle if the crop parameter is True
+    if crop:
+        image = crop_to_circle(image)
 
-    return response
+    # Save the image to a BytesIO object
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+
+    # Serve the image
+    return Response(content=img_byte_arr.getvalue(), media_type='image/png')
 
 @app.get("/get_banner/{username}")
 @app.get("/profile/get_banner/{username}")
