@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, Form, File, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, RedirectResponse
-from starlette.responses import Response, StreamingResponse
+from starlette.responses import Response
 import tldextract
 import os
 import yaml
