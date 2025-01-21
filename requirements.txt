@@ -8,5 +8,5 @@ uuid==1.30
 mysql-connector-python==8.0.33
 python-multipart==0.0.7
 requests==2.32.0
-matplotlib==3.8.0
 tldextract==5.1.2
+pillow==11.1.0
