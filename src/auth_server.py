@@ -9,6 +9,7 @@ import json
 import re
 import io
 from PIL import Image, ImageDraw
+import sentry_sdk
 from _version import __version__
 from utils import db_interface as database
 from utils import password_hasher as hasher
@@ -101,6 +102,12 @@ if __env__ == 'PRODUCTION':
     enable_dev_docs = None
 else:
     enable_dev_docs = '/docs'
+
+# Init sentry SDK
+sentry_sdk.init(
+    dsn="https://1c74e81ca13325c5ac417ea583f98d09@o4507181227769856.ingest.us.sentry.io/4507181538410496",
+    environment='production' if __env__ == 'PRODUCTION' else 'development'
+)
 
 app = FastAPI(
      title="Lif Authentication Server",
