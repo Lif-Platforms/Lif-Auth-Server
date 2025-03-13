@@ -7,6 +7,7 @@ import os
 import yaml
 import json
 import re
+from mailjet_rest import Client
 from _version import __version__
 from utils import db_interface as database
 from utils import password_hasher as hasher
@@ -1245,6 +1246,85 @@ def resolve_report(request: Request, report_id: int = Form()):
         raise HTTPException(status_code=403, detail="Account suspended")
     else:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+@app.post("/mail/send_all")
+async def send_all_mail(request: Request):
+    """
+    ## Send All Mail
+    Sends an email to all users.
+
+    ### Headers:
+    - **subject (str):** The subject of the email.
+    - **access_token (str):** Your auth server access token.
+
+    ### Body:
+    The content of the email.
+    
+    ### Parameters:
+    None
+
+    ### Returns:
+    - **STRING:** Status of operation.
+    """
+    # Get headers
+    subject = request.headers.get("subject")
+    access_token = request.headers.get("access_token")
+
+    # Verify access token
+    if not access_control.verify_token(access_token):
+        raise HTTPException(status_code=401, detail="Invalid access token")
+    
+    # Verify token has "email.send_all" permission node
+    if not access_control.has_perms(
+        token=access_token,
+        permission="email.send_all"
+    ):
+        raise HTTPException(status_code=403, detail="insufficient permissions")
+
+    # Get email body
+    body = (await request.body()).decode('utf-8')
+
+    # Get all accounts
+    accounts = database.info.get_all_accounts()
+
+    # Create mailjet client
+    mailjet = Client(
+        auth=(configurations["mailjet-api-key"], configurations["mailjet-api-secret"]),
+        version="v3.1"
+    )
+
+    # Create messages for email recipients
+    messages = []
+
+    for account in accounts:
+         messages.append({
+            "From": {
+                "Email": "no_reply@lifplatforms.com",
+                "Name": "Lif Platforms"
+            },
+            "To": [
+                {
+                    "Email": account[3],
+                    "Name": account[1]
+                },
+            ],
+            "Subject": subject,
+            "TextPart": body,
+        })
+
+    # Define request data
+    data = {
+        "Messages": messages
+    }
+
+    # Send email
+    email_result = mailjet.send.create(data=data)
+
+    # Check email send status
+    if email_result.status_code != 200:
+        raise HTTPException(status_code=email_result.status_code, detail="Email failed to send!")
+
+    return "Ok"
 
 if __name__ == '__main__':
     import uvicorn

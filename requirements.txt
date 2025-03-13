@@ -10,3 +10,4 @@ python-multipart==0.0.7
 requests==2.32.0
 matplotlib==3.8.0
 tldextract==5.1.2
+mailjet_rest==1.3.4
