@@ -1268,7 +1268,7 @@ async def send_all_mail(request: Request):
     """
     # Get headers
     subject = request.headers.get("subject")
-    access_token = request.headers.get("access_token")
+    access_token = request.headers.get("accessToken")
 
     # Verify access token
     if not access_control.verify_token(access_token):
