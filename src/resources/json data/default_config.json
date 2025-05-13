@@ -8,5 +8,7 @@
     "mysql-ssl": false,
     "mysql-cert-path": "INSERT PATH HERE",
     "mail-service-token": "INSERT TOKEN HERE",
-    "mail-service-url": "INSERT URL HERE"
+    "mail-service-url": "INSERT URL HERE",
+    "mailjet-api-key": "INSERT KEY HERE",
+    "mailjet-api-secret": "INSERT SECRET HERE"
 }

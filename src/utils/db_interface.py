@@ -473,6 +473,15 @@ class info:
         role = cursor.fetchone()
 
         return role[0]
+    
+    def get_all_accounts():
+        conn = connect_to_database()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM accounts")
+        accounts = cursor.fetchall()
+
+        return accounts
 
 # Class for update related functions
 class update:
