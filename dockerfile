@@ -1,8 +1,8 @@
 # Use a Python base image from Docker Hub
-FROM python:3.9-slim
+FROM python:3.10.18-slim
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /
 
 # Copy the requirements.txt file into the container
 COPY requirements.txt /app/
@@ -10,11 +10,11 @@ COPY requirements.txt /app/
 # Install Python dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy everything except the database folder into the container
-COPY /src /app/
+# Copy everything into the container
+COPY /app/ /app/
 
-# Expose the port that Flask app runs on (if you're using a different port, change it here)
+# Expose the port that FastAPI is running on
 EXPOSE 8002
 
 # Command to run the Fast API app when the container starts
-CMD ["python", "auth_server.py"]
+CMD ["uvicorn", "app.main:app", "--port", "8002", "--log-config", "log-config.ini"]
