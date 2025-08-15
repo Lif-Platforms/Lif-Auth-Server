@@ -21,7 +21,7 @@ def check_user_exists_by_id(
     cursor = mysqlConn.cursor()
 
     # Check if the user exists
-    cursor.execute("SELECT user_id FROM accounts WHERE username = %s", (user_id,))
+    cursor.execute("SELECT user_id FROM accounts WHERE user_id = %s", (user_id,))
     user = cast(Optional[Tuple[str]], cursor.fetchone())
 
     # Close db conn but only if it was created by this function

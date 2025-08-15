@@ -18,7 +18,7 @@ async def send_all_mail(request: Request):
 
     ### Headers:
     - **subject (str):** The subject of the email.
-    - **access_token (str):** Your auth server access token.
+    - **accessToken (str):** Your auth server access token.
 
     ### Body:
     The content of the email.
@@ -34,7 +34,7 @@ async def send_all_mail(request: Request):
     access_token = request.headers.get("accessToken")
 
     # Verify access token
-    if not access_token or access_control.verify_token(access_token):
+    if not access_token or not access_control.verify_token(access_token):
         raise HTTPException(status_code=401, detail="Invalid access token")
     
     # Verify token has "email.send_all" permission node

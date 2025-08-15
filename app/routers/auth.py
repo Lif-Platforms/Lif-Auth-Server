@@ -247,17 +247,20 @@ async def suspend_account(account_id: str = Form(), access_token: str = Form()):
     - **Text:** Status of the operation.
     """
     # Verify access token
-    if access_control.verify_token(access_token):
-        # Verify perms
-        if access_control.has_perms(access_token, "account.suspend"):
-            # Update user role in database
-            db_update.set_role(account_id, "SUSPENDED")
+    if not access_control.verify_token(access_token):
+        raise HTTPException(status_code=401, detail="Invalid access token.")
 
-            return "ok"
-        else:
-            raise HTTPException(status_code=403, detail="No Permission")
-    else:
-        raise HTTPException(status_code=401, detail="Invalid Token")
+    # Verify perms
+    if not access_control.has_perms(access_token, "account.suspend"):
+        raise HTTPException(status_code=403, detail="No permission.")
+    
+    # Update user role in database
+    try:
+        db_update.set_role(account_id, "SUSPENDED")
+    except db_exceptions.UserNotFound:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    return "ok"
 
 @router.route("/update_permissions", methods=["POST", "DELETE"])
 async def update_permissions(request: Request):

@@ -12,9 +12,6 @@ router = APIRouter(
     tags=["Profile"]
 )
 
-# Define the location of the assets folder
-assets_folder = os.path.join(__file__, "app/assets")
-
 @router.get("/get_bio/{username}")
 @router.get("/v1/get_bio/{username}")
 async def get_user_bio(username: str):
@@ -92,7 +89,7 @@ async def get_pfp(username: str, crop: bool = False):
         image = Image.open(avatar_path)
     else:
         # Load default image if the user's banner doesn't exist
-        image = Image.open(f'{assets_folder}/default_pfp.png')
+        image = Image.open('app/assets/default_pfp.png')
 
     # Crop the image to a circle if the crop parameter is True
     if crop:
@@ -130,7 +127,7 @@ async def get_banner(username: str):
         response = FileResponse(banner_path, media_type='image/gif')
     else:
         # Return default image if the user's banner doesn't exist
-        response = FileResponse(f'{assets_folder}/default_banner.png', media_type='image/gif')
+        response = FileResponse(f'app/assets/default_banner.png', media_type='image/gif')
 
     # Add caching time limit to image
     response.headers["Cache-Control"] = "public, max-age=3600"
@@ -148,7 +145,7 @@ async def get_profile(username: str, service_url: str = "NA"):
         username = "Guest"
 
     # Get HTML document path
-    document_path = os.path.join(os.path.dirname(__file__), "resources/html documents/profile.html")
+    document_path = "app/resources/html documents/profile.html"
 
     # Read HTML document
     with open(document_path, "r") as document:

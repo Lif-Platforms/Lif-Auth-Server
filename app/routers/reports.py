@@ -46,7 +46,7 @@ def get_reports(request: Request, search_filter: Optional[str] = None):
         raise HTTPException(status_code=403, detail="No permission.")
     
     # Check if search filter is valid
-    if search_filter != "resolved" and search_filter != "unresolved":
+    if search_filter != "resolved" and search_filter != "unresolved" and search_filter != None:
         raise HTTPException(status_code=400, detail="Invalid search filter.")
 
     # Get reports from database

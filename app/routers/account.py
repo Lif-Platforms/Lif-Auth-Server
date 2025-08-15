@@ -490,7 +490,8 @@ async def lif_password_update(
 
     return 'Updated Password'
 
-@router.post("/account/report")
+@router.post("/report")
+@router.post("/v1/report")
 def report_user(user: str = Form(), service: str = Form(), reason: str = Form(), content: str = Form()):
     """
     ## Report User
@@ -520,7 +521,8 @@ def report_user(user: str = Form(), service: str = Form(), reason: str = Form(),
     else:
         raise HTTPException(status_code=404, detail="User not found")
 
-@router.get("/account/get_id/{username}")
+@router.get("/get_id/{username}")
+@router.get("/v1/get_id/{username}")
 def get_account_id(username: str):
     """
     ## Get User Id
