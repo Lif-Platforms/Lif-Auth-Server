@@ -5,7 +5,6 @@ from app.database import exceptions as db_exceptions
 import hashlib
 from app.database import common as db_common
 from mysql.connector import MySQLConnection
-from pydantic import BaseModel
 from app.models import database as db_models
 
 def update_user_bio(username, data) -> None:

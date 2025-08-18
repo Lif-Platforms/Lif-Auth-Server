@@ -98,7 +98,7 @@ def manage_privileges(
 
     # Separate roles and permissions to modify
     for action in data:
-        if action.role != None: modifyRoles.append(db_models.RoleList(
+        if action.role: modifyRoles.append(db_models.RoleList(
             userId=action.userId,
             role=action.role
         ))

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, TypedDict
+from typing import List
 
 class PermissionsList(BaseModel):
     userId: str
