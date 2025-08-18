@@ -1,6 +1,8 @@
 from app.database import connections
 from typing import Tuple, Optional, cast, Literal, Dict, List
 from app.database import exceptions as db_exceptions
+from app.models import database as db_models
+from mysql.connector.cursor import MySQLCursorDict
 
 def get_password_salt(username: str) -> Optional[str]:
     """
@@ -267,3 +269,91 @@ def get_all_accounts() -> Optional[list]:
     accounts = cursor.fetchall()
 
     return accounts
+
+def search_users(query: str) -> List[db_models.UserSearch]:
+    """
+    Search users in the database.
+
+    Parameters:
+        query (str): The user to search.
+
+    Returns:
+        out (List[UserSearch]): List of results from the search.
+    """
+    conn = connections.get_connection()
+    cursor = cast(MySQLCursorDict, conn.cursor(dictionary=True))
+
+    # Search database for users
+    cursor.execute("""SELECT username, user_id, role FROM accounts 
+                   WHERE username LIKE %s
+                   LIMIT 20""",
+                   (query,))
+    resultsRAW = cursor.fetchall()
+    results: list[db_models.UserSearch] = []
+
+    for result in resultsRAW:
+        if not result: continue
+
+        results.append(db_models.UserSearch(
+            userId=str(result["user_id"]),
+            username=str(result["username"]),
+            role=str(result["role"]),
+            permissions=[]
+        ))
+
+    # Add list of permissions to each result
+    user_ids = [result.userId for result in results]
+    format_strings = ','.join(['%s'] * len(user_ids))
+
+    sqlQuery = f"SELECT account_id, node FROM permissions WHERE account_id IN ({format_strings})"
+    cursor.execute(sqlQuery, user_ids)
+    permissions = cursor.fetchall()
+
+    for permission in permissions:
+        if not permission: continue
+
+        for result in results:
+            if result.userId: result.permissions.append(
+                str(permission["node"])
+            )
+
+    return results
+
+def get_user_info(account_id: str) -> db_models.UserInfo:
+    """
+    Get info about a user.
+    Parameters:
+        account_id (str): The id of the account.
+    Raises:
+        app.database.exceptions.UserNotFound: The user was not found.
+    Returns:
+        out (UserInfo): The user requested.
+    """
+    conn = connections.get_connection()
+    cursor = cast(MySQLCursorDict, conn.cursor(dictionary=True))
+
+    cursor.execute("SELECT * FROM accounts WHERE user_id = %s", (account_id,))
+    userInfo = cursor.fetchone()
+
+    if not userInfo:
+        raise db_exceptions.UserNotFound()
+    
+    user = db_models.UserInfo(
+        userId=account_id,
+        username=str(userInfo["username"]),
+        pronouns=str(userInfo["pronouns"]),
+        bio=str(userInfo["bio"]),
+        role=str(userInfo["role"]),
+        permissions=[]
+    )
+
+    # Get user permissions
+    cursor.execute("SELECT node FROM permissions WHERE account_id = %s",
+                   (account_id,))
+    permissions = cursor.fetchall()
+
+    for node in permissions:
+        if not node: continue
+        user.permissions.append(str(node["node"]))
+
+    return user

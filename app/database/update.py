@@ -1,10 +1,12 @@
 from app.database import connections
 import secrets
-from typing import Optional, Tuple, cast
+from typing import Optional, Tuple, cast, List
 from app.database import exceptions as db_exceptions
 import hashlib
 from app.database import common as db_common
 from mysql.connector import MySQLConnection
+from pydantic import BaseModel
+from app.models import database as db_models
 
 def update_user_bio(username, data) -> None:
     """
@@ -124,6 +126,51 @@ def set_role(account_id, role) -> None:
 
     # Set role of user
     cursor.execute("UPDATE accounts SET role = %s WHERE user_id = %s", (role, account_id,))
+    conn.commit()
+    conn.close()
+
+def update_roles(users: List[db_models.RoleList]) -> None:
+    """
+    Update roles in bulk.
+
+    Parameters:
+        users (List[RoleList]): List of users and their roles to update.
+    """
+    conn = connections.get_connection()
+    cursor = conn.cursor()
+
+    query = "UPDATE accounts SET role = %s WHERE user_id = %s"
+    values = [(user.role, user.userId) for user in users]
+
+    cursor.executemany(query, values)
+    conn.commit()
+    conn.close()
+
+def update_permissions(users: List[db_models.PermissionsList]) -> None:
+    """
+    Update permissions in bulk. Will remove all existing permissions for users and add new ones.
+
+    Parameters:
+        users (List[PermissionsList]): List of users and their new permissions.
+    """
+    conn = connections.get_connection()
+    cursor = conn.cursor()
+
+    # Delete all existing permissions for all listed users
+    query = "DELETE FROM permissions WHERE account_id = %s"
+    values = [(user.userId,) for user in users]
+
+    cursor.executemany(query, values)
+
+    # Add new permissions for all users
+    query = "INSERT INTO permissions (account_id, node) VALUES (%s, %s)"
+    masterValues = []
+
+    for user in users:
+        values = [(user.userId, permission) for permission in user.permissions]
+        masterValues.extend(values)
+
+    cursor.executemany(query, masterValues)
     conn.commit()
     conn.close()
 
