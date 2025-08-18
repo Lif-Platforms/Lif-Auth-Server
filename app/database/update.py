@@ -1,5 +1,5 @@
-from app.database import connections
 import secrets
+from app.database import connections
 from typing import Optional, Tuple, cast, List
 from app.database import exceptions as db_exceptions
 import hashlib
@@ -257,5 +257,20 @@ def reset_token(username: str) -> None:
 
     # Update token in database
     cursor.execute("UPDATE accounts SET token = %s WHERE username = %s", (token, username))
+    conn.commit()
+    conn.close()
+
+def save_2fa_secret(account_id: str, secret: str) -> None:
+    """
+    Save the users 2-factor auth secret.
+    Parameters:
+        account_id (str): The id of the account.
+        secret (str): The users 2fa secret.
+    """
+    conn = connections.get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE accounts SET 2fa_secret = %s WHERE user_id = %s",
+                   (secret, account_id))
     conn.commit()
     conn.close()

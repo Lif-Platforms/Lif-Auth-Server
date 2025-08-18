@@ -267,6 +267,7 @@ def get_all_accounts() -> Optional[list]:
 
     cursor.execute("SELECT * FROM accounts")
     accounts = cursor.fetchall()
+    conn.close()
 
     return accounts
 
@@ -308,6 +309,7 @@ def search_users(query: str) -> List[db_models.UserSearch]:
     sqlQuery = f"SELECT account_id, node FROM permissions WHERE account_id IN ({format_strings})"
     cursor.execute(sqlQuery, user_ids)
     permissions = cursor.fetchall()
+    conn.close()
 
     for permission in permissions:
         if not permission: continue
@@ -351,9 +353,33 @@ def get_user_info(account_id: str) -> db_models.UserInfo:
     cursor.execute("SELECT node FROM permissions WHERE account_id = %s",
                    (account_id,))
     permissions = cursor.fetchall()
+    conn.close()
 
     for node in permissions:
         if not node: continue
         user.permissions.append(str(node["node"]))
 
     return user
+
+def get_2fa_secret(account_id: str) -> Optional[str]:
+    """
+    Get the 2-factor authentication secret for a user (if they have one).
+    Parameters:
+        account_id (str): The id of the a account.
+    Raises:
+        app.database.exceptions.UserNotFound: The specified user was not found.
+    Returns:
+        out (Optional[str]): The 2fa secret if the user has one.
+    """
+    conn = connections.get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT 2fa_secret FROM accounts WHERE user_id = %s",
+                   (account_id,))
+    secret = cursor.fetchone()
+    conn.close()
+
+    if not secret:
+        raise db_exceptions.UserNotFound()
+    
+    return str(secret[0]) if secret[0] else None
