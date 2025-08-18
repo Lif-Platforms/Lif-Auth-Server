@@ -7,6 +7,7 @@ from fastapi import (
     File,
     WebSocket,
     BackgroundTasks,
+    Header,
 )
 import app.database.exceptions as db_exceptions
 from app.database import auth as db_auth
@@ -21,6 +22,7 @@ import app.access_control as access_control
 from typing import cast, Optional
 import re
 import socket
+import pyotp
 
 router = APIRouter(
     prefix="/account",
@@ -535,3 +537,35 @@ def get_account_id(username: str):
     - **JSON:** Status of the operation.
     """
     return db_info.get_user_id(username)
+
+@router.get("/v1/2fa-setup")
+def setup_2fa(
+    username: str = Header(),
+    token: str = Header()
+):
+    try:
+        db_auth.check_token(username, token)
+    except db_exceptions.InvalidToken:
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    except db_exceptions.AccountSuspended:
+        raise HTTPException(status_code=403, detail="Account suspended.")
+
+    user_id = db_common.get_user_id(username)
+
+    if not user_id:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+    try:
+        two_FA_secret = db_info.get_2fa_secret(user_id)
+    except db_exceptions.UserNotFound:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+    # If the user does not have a 2fa secret, generate a new one
+    if not two_FA_secret:
+        two_FA_secret = pyotp.random_base32()
+        db_update.save_2fa_secret(user_id, two_FA_secret)
+
+    return pyotp.totp.TOTP(two_FA_secret).provisioning_uri(
+        name=f'{username}@lifplatforms.com',
+        issuer_name='Lif Platforms'
+    )

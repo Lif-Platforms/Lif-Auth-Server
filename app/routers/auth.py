@@ -7,6 +7,7 @@ from app.database import info as db_info
 from app.database import update as db_update
 from typing import Optional
 import app.access_control as access_control
+import pyotp
 
 router = APIRouter(
     prefix="/auth",
@@ -67,6 +68,98 @@ async def lif_login(username: str = Form(), password: str = Form(), permissions:
         # Check is all checks were successful
         if checks != len(perms):
             raise HTTPException(status_code=403, detail="No Permission")
+
+    return {'token': token}
+
+@router.post("/v2/login")
+async def login_v2(
+    username: str = Form(),
+    password: str = Form(),
+    two_fa_code: Optional[str] = Form(None),
+    permissions: Optional[str] = None
+):
+    """
+    ## Login Route For Lif Accounts
+    Handles the authentication process for Lif Accounts.
+
+    ### Parameters:
+    - **username (str):** The username of the account.
+    - **password (str):** The password for the account.
+    - **two_fa_code (optional: str):** 2fa code for the account.
+
+    ### Query Parameters:
+    - **permissions:** List of required permission nodes for successful authentication
+
+    ### Returns:
+    - **JSON:** Token for user account.
+    """
+    # Verifies credentials with database
+    try:
+        db_auth.verify_credentials(username=username, password=password)
+    except db_exceptions.InvalidCredentials:
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    except db_exceptions.AccountSuspended:
+        raise HTTPException(status_code=403, detail="Account suspended!")
+    
+    # Gets token from database
+    try:
+        token = db_info.retrieve_user_token(username=username)
+    except db_exceptions.UserNotFound:
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    
+    # Get account id
+    account_id = db_info.get_user_id(username)
+
+    if not account_id:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+    # Check if required permissions were given
+    if permissions is not None:
+        # Separate permissions
+        perms = permissions.split(",")
+
+        # Keep track of checks
+        # In order for a successful authentication the checks must equal the number of permission nodes provided
+        checks = 0
+
+        # Check each perm
+        for perm in perms:
+            status = db_auth.check_account_permission(account_id, perm)
+
+            # Check status and update checks
+            if status:
+                checks += 1
+
+        # Check is all checks were successful
+        if checks != len(perms):
+            raise HTTPException(status_code=403, detail="No Permission")
+        
+    # Check if the user has 2fa enabled
+    try:
+        two_fa_secret = db_info.get_2fa_secret(account_id)
+    except db_exceptions.UserNotFound:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+    if two_fa_secret and not two_fa_code:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "detail": "2fa code required!",
+                "errorCode": "2FA_REQUIRED"
+            }
+        )
+
+    if two_fa_secret and two_fa_code:
+        totp = pyotp.TOTP(two_fa_secret)
+        two_fa_status = totp.verify(two_fa_code)
+
+        if not two_fa_status: return JSONResponse(
+            status_code=401,
+            content={
+                "detail": "Invalid 2fa code!",
+                "errorCode": "INVALID_2FA_CODE"
+            }
+        )
 
     return {'token': token}
     
