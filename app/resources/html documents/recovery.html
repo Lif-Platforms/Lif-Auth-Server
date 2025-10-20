@@ -1,44 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lif Platforms Account Recovery</title>
+  <style>
     body {
-        background-color: white;
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 0;
     }
-
-    h1 {
-        text-align: center;
-        font-family: Arial, Helvetica, sans-serif;
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 30px;
     }
-
-    p {
-        text-align: center;
-        font-family: Arial, Helvetica, sans-serif;
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
     }
-
-    span {
-        text-align: center;
-        font-family: Arial, Helvetica, sans-serif;
+    .header h1 {
+      color: #2c3e50;
+      margin: 0;
+    }
+    .header img {
+        margin: 0 auto;
         display: block;
-        margin-top: 40px;
-        font-weight: bold;
-        font-size: xx-large;
+        width: 60px;
+        margin-bottom: 15px;
     }
-
-    .logo {
-        display: block;
-        margin: auto;
-        width: 200px;
-        height: inherit;
+    .code-box {
+      background-color: #ecf0f1;
+      border-radius: 6px;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #34495e;
+      margin: 20px 0;
     }
-</style>
+    .footer {
+      font-size: 14px;
+      color: #7f8c8d;
+      text-align: center;
+      margin-top: 30px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #3498db;
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
 <body>
-    <img class="logo" src="https://lifplatforms.com/assets/Images/HomePage/Lif-Logo.png">
-    <h1>Here is Your Lif Recovery Code</h1>
-    <p>Don't show anyone else &#128521;.</p>
-    <span>{{RECOVERY CODE}}</span>
+  <div class="container">
+    <div class="header">
+        <img src="https://lifplatforms.com/images/index/Lif-Logo-Dark.png" alt="Lif Logo">
+        <h1>Lif Platforms</h1>
+    </div>
+    <p>Hello,</p>
+    <p>We received a request to recover your Lif Platforms account. Use the code below to proceed:</p>
+    <div class="code-box">{{RECOVERY CODE}}</div>
+    <p>If you didn't request this, you can safely ignore this email.</p>
+    <div class="footer">
+      <p>Need help? Contact our support team at lif.platforms@gmail.com</p>
+      <p>© 2025 Lif Platforms. All rights reserved.</p>
+    </div>
+  </div>
 </body>
 </html>
