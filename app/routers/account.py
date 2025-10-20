@@ -23,6 +23,7 @@ from typing import cast, Optional
 import re
 import socket
 import pyotp
+from mailjet_rest import Client
 
 router = APIRouter(
     prefix="/account",
@@ -341,21 +342,32 @@ def send_recovery_email(email):
     # Add recovery code to email
     email_body = email_body.replace("{{RECOVERY CODE}}", recovery_code)
 
-    service_url = config.get_key("mail-service-url")
-    access_token = config.get_key("mail-service-token")
+    api_key = config.get_key("mailjet-api-key")
+    api_secret = config.get_key("mailjet-api-secret")
 
-    # Send email request to mail service
-    requests.post(
-        url=f"{service_url}/service/send_email",
-        headers={
-            "access-token": access_token,
-            "subject": "Your Lif Recovery Code",
-            "recipient": email
-        },
-        data=email_body,
-        timeout=15
-    )
+    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
+    data = {
+        "Messages": [
+            {
+                "From": {
+                    "Email": "no_reply@lifplatforms.com",
+                    "Name": "Lif Platforms"
+                },
+                "To": [
+                    {
+                        "Email": email,
+                        "Name": "Lif Platforms User"
+                    }
+                ],
+                "Subject": "Lif Account Recovery",
+                "TextPart": f"Hello, we have recived a request to reset your password. Here is your recovery code {recovery_code}",
+                "HTMLPart": email_body
+            }
+        ]
+    }
+    mailjet.send.create(data=data)
+    
     return recovery_code
 
 @router.websocket('/account_recovery')
