@@ -23,6 +23,7 @@ from typing import cast, Optional
 import re
 import socket
 import pyotp
+from mailjet_rest import Client
 
 router = APIRouter(
     prefix="/account",
@@ -211,7 +212,7 @@ async def get_account_data(data, account, request: Request, search_mode: str = "
     else:
         raise HTTPException(status_code=403, detail="Invalid Token!")
     
-def send_welcome_email(email: str):
+def send_welcome_email(email: str, username: str):
     # Load html email document
     document_path = os.path.join(os.path.dirname(__file__), "../resources/html documents/welcome.html")
 
@@ -219,20 +220,40 @@ def send_welcome_email(email: str):
         email_body = document.read()
         document.close()
 
-    service_url = config.get_key("mail-service-url")
-    access_token = config.get_key("mail-service-token")
+    textDocumentPath = os.path.join(os.path.dirname(__file__), "../resources/text documents/welcome.txt")
 
-    # Send email request to mail service
-    requests.post(
-        url=f"{service_url}/service/send_email",
-        headers={
-            "access-token": access_token,
-            "subject": "Welcome To Lif",
-            "recipient": email
-        },
-        data=email_body,
-        timeout=15
+    with open(textDocumentPath, "r") as document:
+        email_text = document.read()
+        document.close()
+
+    mailjetKey = config.get_key("mailjet-api-key")
+    mailjetSecret = config.get_key("mailjet-api-secret")
+
+    mailjet = Client(
+        auth=(mailjetKey, mailjetSecret),
+        version="v3.1"
     )
+
+    # Send email via Mailjet API
+    mailjet.send.create(data={
+        "Messages": [
+            {
+                "From": {
+                    "Email": "no_reply@lifplatforms.com",
+                    "Name": "Lif Platforms"
+                },
+                "To": [
+                    {
+                        "Email": email,
+                        "Name": username
+                    }
+                ],
+                "Subject": "Welcome To Lif Platforms",
+                "TextPart": email_text,
+                "HTMLPart": email_body
+            }
+        ]
+    })
 
 @router.post("/create_account")
 @router.post("/v1/create")
@@ -266,7 +287,7 @@ async def create_lif_account(request: Request, bg_tasks: BackgroundTasks):
         raise HTTPException(status_code=409, detail="Username or email is already in use.")
 
     # Send welcome email
-    bg_tasks.add_task(send_welcome_email, email)
+    bg_tasks.add_task(send_welcome_email, email, username)
 
     return {"Status": "Ok", "Username": username, "Token": token}
 
