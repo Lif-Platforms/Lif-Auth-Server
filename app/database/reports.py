@@ -21,6 +21,7 @@ def submit_report(user: str, service: str, reason: str, content: str) -> None:
         (user, service, reason, content, False,)
     )
     conn.commit()
+    conn.close()
 
 def get_reports(
     search_filter: Optional[Literal["unresolved", "resolved"]] = None,
@@ -39,21 +40,17 @@ def get_reports(
     conn = connections.get_connection()
     cursor = conn.cursor()
 
-    filter = None
-
-    if search_filter == "resolved":
-        filter = True
-    elif search_filter == "unresolved":
-        filter = False
-
+    filter = True if search_filter == "resolved" else False
+    
     # Check filter and execute correct SQL query
-    if filter:
+    if search_filter:
         cursor.execute("SELECT * FROM reports WHERE resolved = %s LIMIT %s", (filter, limit))
     else:
         cursor.execute("SELECT * FROM reports LIMIT %s", (limit,))
 
     reportsRAW = cursor.fetchall()
     reports = cast(list[Tuple], reportsRAW) if reportsRAW else []
+    conn.close()
 
     return reports
 
@@ -72,6 +69,7 @@ def get_report(report_id: int) -> Optional[Tuple]:
 
     cursor.execute("SELECT * FROM reports WHERE id = %s", (report_id,))
     report = cast(Optional[Tuple], cursor.fetchone())
+    conn.close()
 
     return report
 
@@ -87,3 +85,4 @@ def resolve_report(report_id: int) -> None:
 
     cursor.execute("UPDATE reports SET resolved = %s WHERE id = %s", (True, report_id))
     conn.commit()
+    conn.close()
