@@ -4,3 +4,4 @@
 - [Authentication](./authentication.md)
 - [Authorization](./authorization.md)
 - [Operations](./operations.md)
+- [Account Management](./account-management.md)
