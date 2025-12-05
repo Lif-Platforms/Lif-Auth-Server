@@ -7,7 +7,7 @@ Every user has a profile. It consists of the following components:
 - Pronouns
 - Avatar/Profile Pic
 - Banner
-- Banner
+- Bio
 
 Users can customize/update these components through My Lif.
 > [!NOTE]

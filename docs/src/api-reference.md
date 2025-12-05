@@ -1,0 +1,2 @@
+# API Reference
+Auth Server uses [Swagger UI](https://swagger.io/tools/swagger-ui/) for visualizing routes and documenting routes, schemas, models, and error codes. Unfortunately, this documentation is not available in production. However, you can access it by running Auth Server locally and heading to [http://localhost:8002/docs](http://localhost:8002/docs).
