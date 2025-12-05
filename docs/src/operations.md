@@ -1,5 +1,5 @@
 # Operations
-The Operations section provides a practical guide to running, maintaining, and troubleshooting the Auth Server. While the Overview and Architecture pages explain *what* the system does, this section focuses on *how* to keep it healthy and secure in day‑to‑day use.
+The Operations section provides a practical guide to running, maintaining, and troubleshooting Auth Server. While the Overview and Architecture pages explain *what* the system does, this section focuses on *how* to keep it healthy and secure in day‑to‑day use.
 
 ## Containerization
 Auth Server is intended to run inside a Docker container. This has a few benefits.
@@ -75,3 +75,46 @@ services:
 
 ## SSL
 Auth Server doesn't natively support SSL/HTTPS. For production environments, we recommend putting Auth Server behind a reverse proxy. This will make the process of securing connections with Auth Server over the web significantly easier. We recommend using [Nginx](https://nginx.org/en/) for the reverse proxy and [CertBot](https://certbot.eff.org/) for SSL certificates. Both are free tools.
+
+## Config.yml
+The `config.yml` file is used for configuring Auth Server. In this section, we will go over the configuration options and what they do. Here is an example config file:
+
+```yml
+allow-origins:
+- '*'
+mail-service-token: Token Here
+mail-service-url: Url Here
+mailjet-api-key: API Key Here
+mailjet-api-secret: API Secret Here
+mysql-cert-path: cert.pem
+mysql-database: Database Here
+mysql-host: Host Here
+mysql-password: Password Here
+mysql-port: Port Here
+mysql-ssl: true
+mysql-user: Username Here
+```
+
+Lets dive deeper into each option and explore what it does.
+
+- **allow-origins:** This option configures the allowed origins for CORS. This is a browser enforced policy that controls what hosts are allowed to access this resource. Here we've set it to allow all origins.
+
+- **mail-service-token:** This is the access token needed to interface with Mail Service. This service handles communication to users via email. This service is being phased out and replaced with MailJet.
+
+- **mail-service-url:** This is the URL Auth Server should use to access Mail Service.
+
+- **mailjet-api-key & mailjet-api-secret:** These are the configuration options for setting the API key for the MailJet API. We use this API to communicate with customers via email.
+
+- **mysql-cert-path:** Local path for the certificate file for MySQL SSL connections. This option is ignored if SSL is disabled.
+
+- **mysql-database:** This is the database that Auth Server will use to store and access data.
+
+- **mysql-host:** Host configuration for the MySQL server used by Auth Server.
+
+- **mysql-password:** Password to the MySQL user assigned to Auth Server.
+
+- **mysql-port:** Port the MySQL Server is hosted on. Defaults to 3306.
+
+- **mysql-ssl:** Tells Auth Server whether or not to use SSL when connecting to MySQL.
+
+- **mysql-user:** MySQL user assigned to Auth Server.
