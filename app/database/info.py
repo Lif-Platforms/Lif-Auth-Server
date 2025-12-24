@@ -383,3 +383,31 @@ def get_2fa_secret(account_id: str) -> Optional[str]:
         raise db_exceptions.UserNotFound()
     
     return str(secret[0]) if secret[0] else None
+
+def get_2fa_status(account_id: str) -> Literal["DISABLED", "WAITING_APPROVAL", "ENABLED"]:
+    """
+    Get the 2-factor authentication status for a user.
+    Parameters:
+        account_id (str): The id of the account.
+    Raises:
+        app.database.exceptions.UserNotFound: The specified user was not found.
+    Returns:
+        out (Literal): The 2FA status ('DISABLED', 'WAITING_APPROVAL', or 'ENABLED').
+    """
+    conn = connections.get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT 2fa_secret, 2fa_enabled FROM accounts WHERE user_id = %s",
+                   (account_id,))
+    data = cursor.fetchone()
+    conn.close()
+
+    if not data:
+        raise db_exceptions.UserNotFound()
+    
+    if not isinstance(data[0], str):
+        return "DISABLED"
+    
+    status = cast(bool, data[1])
+
+    return "ENABLED" if status else "WAITING_APPROVAL"

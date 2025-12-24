@@ -140,7 +140,12 @@ async def login_v2(
     except db_exceptions.UserNotFound:
         raise HTTPException(status_code=500, detail="Internal server error")
     
-    if two_fa_secret and not two_fa_code:
+    try:
+        twoFaStatus = db_info.get_2fa_status(account_id)
+    except:
+        raise HTTPException(status_code=500)
+    
+    if two_fa_secret and twoFaStatus == "ENABLED" and not two_fa_code:
         return JSONResponse(
             status_code=401,
             content={
@@ -149,7 +154,7 @@ async def login_v2(
             }
         )
 
-    if two_fa_secret and two_fa_code:
+    if two_fa_secret and twoFaStatus == "ENABLED" and two_fa_code:
         totp = pyotp.TOTP(two_fa_secret)
         two_fa_status = totp.verify(two_fa_code)
 

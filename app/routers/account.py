@@ -15,7 +15,8 @@ from app.database import update as db_update
 from app.database import info as db_info
 from app.database import common as db_common
 from app.database import reports as db_reports
-import requests
+from app.models import account as account_models
+from app.models import common as common_models
 import os
 import app.config as config
 import app.access_control as access_control
@@ -575,6 +576,16 @@ def setup_2fa(
     username: str = Header(),
     token: str = Header()
 ):
+    """
+    ## 2FA Setup
+    Sets up 2-Factor Authentication for users.
+
+    ### Parameters:
+    None
+
+    ### Returns:
+    STRING: 2FA provisioning URL needed for setup with authenticator app.
+    """
     try:
         db_auth.check_token(username, token)
     except db_exceptions.InvalidToken:
@@ -601,3 +612,113 @@ def setup_2fa(
         name=f'{username}@lifplatforms.com',
         issuer_name='Lif Platforms'
     )
+
+@router.get("/v1/2fa-status")
+def two_fa_status(
+    username: str = Header(),
+    token: str = Header()
+) -> account_models.TwoFaStatus:
+    """
+    ## 2FA Status
+    Check the status of a users 2FA setup.
+
+    ### Parameters:
+    None
+
+    ### Returns:
+    JSON: Status of the users 2FA setup.
+    """
+    try:
+        db_auth.check_token(username, token)
+    except db_exceptions.InvalidToken:
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    except db_exceptions.AccountSuspended:
+        raise HTTPException(status_code=403, detail="Account suspended.")
+    
+    user_id = db_common.get_user_id(username)
+
+    if not user_id:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+    try:
+        return account_models.TwoFaStatus(
+            status=db_info.get_2fa_status(user_id)
+        )
+    except:
+        raise HTTPException(status_code=500)
+    
+@router.post("/v1/enable-2fa")
+def enable_2fa(
+    username: str = Header(),
+    token: str = Header(),
+    twoFaCode: str = Form()
+) -> common_models.StatusOk:
+    try:
+        db_auth.check_token(username, token)
+    except db_exceptions.InvalidToken:
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    except db_exceptions.AccountSuspended:
+        raise HTTPException(status_code=403, detail="Account suspended.")
+    
+    user_id = db_common.get_user_id(username)
+
+    if not user_id:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+    try:
+        secret = db_info.get_2fa_secret(user_id)
+    except:
+        raise HTTPException(status_code=500)
+    
+    if not secret:
+        raise HTTPException(status_code=403, detail="You must set up 2FA first.")
+    
+    totp = pyotp.TOTP(secret)
+    two_fa_status = totp.verify(twoFaCode)
+
+    if not two_fa_status:
+        raise HTTPException(status_code=401, detail="Invalid 2FA code.")
+    
+    try:
+        db_update.enable_2fa(user_id)
+        return common_models.StatusOk()
+    except:
+        raise HTTPException(status_code=500)
+    
+@router.post("/v1/disable-2fa")
+def disable_2fa(
+    username: str = Header(),
+    token: str = Header(),
+    twoFaCode: str = Form(),
+) -> common_models.StatusOk:
+    try:
+        db_auth.check_token(username, token)
+    except db_exceptions.InvalidToken:
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    except db_exceptions.AccountSuspended:
+        raise HTTPException(status_code=403, detail="Account suspended.")
+    
+    user_id = db_common.get_user_id(username)
+
+    if not user_id:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+    try:
+        secret = db_info.get_2fa_secret(user_id)
+    except:
+        raise HTTPException(status_code=500)
+    
+    if not secret:
+        raise HTTPException(status_code=403, detail="You must set up 2FA first.")
+    
+    totp = pyotp.TOTP(secret)
+    two_fa_status = totp.verify(twoFaCode)
+
+    if not two_fa_status:
+        raise HTTPException(status_code=401, detail="Invalid 2FA code.")
+    
+    try:
+        db_update.disable_2fa(user_id)
+        return common_models.StatusOk()
+    except:
+        raise HTTPException(status_code=500)

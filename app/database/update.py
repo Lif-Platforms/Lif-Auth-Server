@@ -274,3 +274,44 @@ def save_2fa_secret(account_id: str, secret: str) -> None:
                    (secret, account_id))
     conn.commit()
     conn.close()
+
+def enable_2fa(user_id: str) -> None:
+    """
+    Enable 2-Factor Authentication on an account.
+    Parameters:
+        user_id (str): Id of the account.
+    """
+    conn = connections.get_connection()
+    cursor = conn.cursor()
+
+    # Check if the user has setup 2fa before enabling it
+    cursor.execute("SELECT 2fa_secret FROM accounts WHERE user_id = %s;",
+                   (user_id,))
+    account = cursor.fetchone()
+
+    if not account:
+        conn.close()
+        raise db_exceptions.UserNotFound()
+
+    if not isinstance(account[0], str):
+        conn.close()
+        raise db_exceptions.TwoFaNotSetup()
+    
+    cursor.execute("UPDATE accounts SET 2fa_enabled = 1 WHERE user_id = %s;",
+                   (user_id,))
+    conn.commit()
+    conn.close()
+
+def disable_2fa(user_id: str) -> None:
+    """
+    Disable 2-Factor Authentication on an account.
+    Parameters:
+        user_id (str): Id of the account.
+    """
+    conn = connections.get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("UPDATE accounts SET 2fa_enabled = 0, 2fa_secret = NULL WHERE user_id = %s;",
+                   (user_id,))
+    conn.commit()
+    conn.close()
