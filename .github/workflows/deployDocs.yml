@@ -1,4 +1,4 @@
-# Simple workflow for deploying static content to GitHub Pages
+# Simple workflow for building mdBook documentation and deploying to GitHub Pages
 name: Deploy Documentation
 
 on:
@@ -31,13 +31,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install mdBook
+        run: |
+          # Install mdbook via cargo (specify a version if you want pinning)
+          cargo install mdbook --version 0.4.34 || cargo install mdbook
+          mdbook --version
+
+      - name: Build mdBook site
+        working-directory: ./docs
+        run: |
+          # Build the mdBook inside the docs directory.
+          # mdbook will output to ./docs/book by default.
+          mdbook build
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
+          # Upload the generated site
           path: 'docs/book'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
