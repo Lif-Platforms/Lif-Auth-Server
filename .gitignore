@@ -16,3 +16,6 @@ access-control.yml
 
 # Logs folder
 logs/
+
+# Documentation
+docs/book/
