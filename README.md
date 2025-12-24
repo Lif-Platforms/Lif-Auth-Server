@@ -22,13 +22,12 @@ Lif Authentication Server is the backbone of Lif Platforms identity and access m
 ## 📚 Documentation
 Full documentation is available via GitHub Pages:
 
-- [Overview]() — Purpose, features, and architecture
-- [Authentication]() — Login flows and token systems
-- [Authorization]() — Roles, permission nodes, and access control
-- [Account Management]() — User lifecycle and profile handling
-- [Operations]() — Container setup, SSL, and monitoring
-- [Security]() — Best practices and threat model
-- [API Reference]() — Endpoints, parameters, and error codes
+- [Overview](https://lif-platforms.github.io/Lif-Auth-Server/overview.html) — Purpose, features, and architecture
+- [Authentication](https://lif-platforms.github.io/Lif-Auth-Server/authentication.html) — Login flows and token systems
+- [Authorization](https://lif-platforms.github.io/Lif-Auth-Server/authorization.html) — Roles, permission nodes, and access control
+- [Operations](https://lif-platforms.github.io/Lif-Auth-Server/operations.html) — Container setup, SSL, and monitoring
+- [Account Management](https://lif-platforms.github.io/Lif-Auth-Server/account-management.html)
+- [API Reference](https://lif-platforms.github.io/Lif-Auth-Server/api-reference.html) — Endpoints, parameters, and error codes
 
 ## 🚀 Getting Started
-To run Auth Server locally or in production, see the [Operations guide]().
+To run Auth Server locally or in production, see the [Operations guide](https://lif-platforms.github.io/Lif-Auth-Server/operations.html).
