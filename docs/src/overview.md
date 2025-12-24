@@ -32,10 +32,9 @@ Use the sidebar to explore:
 - [Authentication](./authentication.md) — login flows and token issuance
 - [Authorization](./authorization.md) — permission nodes and policy enforcement
 - [Operations](./operations.md) — configuration, deployment, and troubleshooting
-- [Security](./security.md) — threat model and best practices
 - [API Reference](./api.md) — Swagger routes and error codes
 
 ---
 
-Maintained by the Identity & Security team, the Auth Server is a critical component of our platform.  
+Maintained by Lif Platforms, Auth Server is a critical component of our platform.  
 This documentation provides both the conceptual overview and the operational playbook needed to run it securely and effectively.
