@@ -5,6 +5,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # Only run if the /docs dir was changed
+    paths:
+      - "docs/**"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -40,9 +43,7 @@ jobs:
 
       - name: Install mdBook
         run: |
-          # Install mdbook via cargo (specify a version if you want pinning)
-          cargo install mdbook --version 0.4.34 || cargo install mdbook
-          mdbook --version
+          cargo install mdbook mdbook --version
 
       - name: Build mdBook site
         working-directory: ./docs
