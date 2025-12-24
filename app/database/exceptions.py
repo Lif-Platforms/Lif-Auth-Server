@@ -12,3 +12,6 @@ class UserNotFound(Exception):
 
 class Conflict(Exception):
     pass
+
+class TwoFaNotSetup(Exception):
+    pass
